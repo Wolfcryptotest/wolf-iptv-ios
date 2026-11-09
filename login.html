@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wolf IPTV</title>
+<style>
+body{margin:0;background:#0d0e12;color:#eceef4;font-family:-apple-system,Helvetica,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.box{width:min(420px,90vw);text-align:center}
+h1{font-size:40px;margin:0 0 6px}h1 b{color:#e4002b}h1 i{color:#fdb912;font-style:normal}
+p{color:#9aa0b4}
+input{display:block;width:100%;box-sizing:border-box;margin:10px 0;font-size:18px;padding:14px;border-radius:12px;border:2px solid #2a2d3a;background:#1e2029;color:#fff}
+button{width:100%;font-size:19px;font-weight:bold;padding:14px;border:0;border-radius:12px;background:#3b82f6;color:#fff;margin-top:8px}
+#err{color:#ef4444;min-height:24px;margin-top:8px}
+</style></head><body><div class="box">
+<h1>Wolf <b>IP</b><i>TV</i></h1>
+<p>IPTV sağlayıcı bilgilerini gir</p>
+<input id="s" placeholder="Sunucu (ör. http://sunucu.com:8080)" autocapitalize="off" autocorrect="off">
+<input id="u" placeholder="Kullanıcı adı" autocapitalize="off" autocorrect="off">
+<input id="p" type="password" placeholder="Şifre">
+<button id="go">Giriş</button><div id="err"></div>
+</div><script>
+var c=null;try{c=JSON.parse(localStorage.getItem("wolf_creds")||"null")}catch(e){}
+if(c&&c.server&&!/yeni=1/.test(location.search)){location.replace("tv.html")}
+if(c){s.value=c.server||"";u.value=c.user||""}
+go.onclick=function(){
+  var sv=s.value.trim(),uv=u.value.trim(),pv=p.value;
+  if(!sv||!uv||!pv){err.textContent="Üç alanı da doldur.";return}
+  if(!/^https?:\/\//i.test(sv))sv="http://"+sv; sv=sv.replace(/\/+$/,"");
+  err.textContent="Kontrol ediliyor…";
+  var x=new XMLHttpRequest();x.open("GET",sv+"/player_api.php?username="+encodeURIComponent(uv)+"&password="+encodeURIComponent(pv),true);
+  x.timeout=15000;x.ontimeout=x.onerror=function(){err.textContent="Sunucuya ulaşılamadı."};
+  x.onload=function(){var d;try{d=JSON.parse(x.responseText)}catch(e){}
+    if(!d||!d.user_info||String(d.user_info.auth)!=="1"){err.textContent="Giriş başarısız: bilgiler hatalı.";return}
+    localStorage.setItem("wolf_creds",JSON.stringify({server:sv,user:uv,pw:pv}));location.replace("tv.html")};
+  x.send();
+};
+</script></body></html>

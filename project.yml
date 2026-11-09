@@ -1,0 +1,32 @@
+name: WolfIPTV
+options:
+  bundleIdPrefix: com.wolf
+  deploymentTarget: { iOS: "15.0" }
+targets:
+  WolfIPTV:
+    type: application
+    platform: iOS
+    sources:
+      - path: App.swift
+      - path: tv.html
+        buildPhase: resources
+      - path: login.html
+        buildPhase: resources
+      - path: direct.js
+        buildPhase: resources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Wolf IPTV
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UIBackgroundModes: [audio]
+        NSAppTransportSecurity: { NSAllowsArbitraryLoads: true, NSAllowsArbitraryLoadsInWebContent: true }
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.wolf.iptv
+      TARGETED_DEVICE_FAMILY: "1,2"
+      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGNING_REQUIRED: "NO"
