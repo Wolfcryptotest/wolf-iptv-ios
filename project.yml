@@ -7,15 +7,12 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: App.swift
-      - path: tv.html
-        buildPhase: resources
-      - path: login.html
-        buildPhase: resources
-      - path: direct.js
+      - path: WolfIPTV/App.swift
+      - path: WolfIPTV/www
+        type: folder
         buildPhase: resources
     info:
-      path: Info.plist
+      path: WolfIPTV/Info.plist
       properties:
         CFBundleDisplayName: Wolf IPTV
         CFBundleShortVersionString: "1.0"

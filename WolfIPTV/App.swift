@@ -24,8 +24,8 @@ struct WebView: UIViewRepresentable {
         wv.backgroundColor = UIColor(red: 0.05, green: 0.05, blue: 0.07, alpha: 1)
         wv.scrollView.isScrollEnabled = false
         wv.scrollView.contentInsetAdjustmentBehavior = .never
-        if let page = Bundle.main.url(forResource: "login", withExtension: "html") {
-            wv.loadFileURL(page, allowingReadAccessTo: Bundle.main.bundleURL)
+        if let dir = Bundle.main.url(forResource: "www", withExtension: nil) {
+            wv.loadFileURL(dir.appendingPathComponent("login.html"), allowingReadAccessTo: dir)
         }
         return wv
     }
