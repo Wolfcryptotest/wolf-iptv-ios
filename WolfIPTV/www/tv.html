@@ -63,17 +63,17 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 .tile.foc { box-shadow: 0 0 0 4px #3b82f6, 0 0 18px #3b82f6; }
 .tile.play { box-shadow: 0 0 0 3px #4ade80; }
 /* 🏠 ANA SAYFA (Netflix tarzı) */
-#home { position: absolute; left: 0; top: 64px; width: 1280px; height: 656px; display: none; overflow: hidden; background: #0d0e12; }
-#hHero { position: absolute; left: 0; top: 0; width: 1280px; height: 230px; overflow: hidden; }
+#home { position: absolute; left: 0; top: 64px; right: 0; height: 656px; display: none; overflow: hidden; background: #0d0e12; }
+#hHero { position: absolute; left: 0; top: 0; right: 0; height: 230px; overflow: hidden; }
 #hHeroImg { position: absolute; right: 0; top: 0; width: 760px; height: 230px; background-size: cover; background-position: center; opacity: 0.55; }
-#hHeroFade { position: absolute; left: 0; top: 0; width: 1280px; height: 230px; background: linear-gradient(90deg, #0d0e12 38%, rgba(13,14,18,0.6) 60%, rgba(13,14,18,0) 100%), linear-gradient(0deg, #0d0e12 0%, rgba(13,14,18,0) 40%); }
+#hHeroFade { position: absolute; left: 0; top: 0; right: 0; height: 230px; background: linear-gradient(90deg, #0d0e12 38%, rgba(13,14,18,0.6) 60%, rgba(13,14,18,0) 100%), linear-gradient(0deg, #0d0e12 0%, rgba(13,14,18,0) 40%); }
 #hHeroTxt { position: absolute; left: 40px; top: 26px; width: 700px; }
 #hHeroTxt h1 { margin: 0 0 8px; font-size: 38px; line-height: 44px; max-height: 88px; overflow: hidden; color: #fff; }
 #hHeroTxt .m { font-size: 20px; color: #cfd3e0; }
 #hHeroTxt .m b { color: #facc15; }
 #hHeroTxt .hint { margin-top: 14px; font-size: 18px; color: #9aa0b4; }
-#hRows { position: absolute; left: 0; top: 230px; width: 1280px; height: 426px; overflow: hidden; }
-.hr { position: absolute; left: 0; width: 1280px; }
+#hRows { position: absolute; left: 0; top: 230px; right: 0; height: 426px; overflow: hidden; }
+.hr { position: absolute; left: 0; right: 0; }
 .hr .ht { position: absolute; left: 40px; top: 0; font-size: 22px; font-weight: bold; color: #fff; }
 .hc { position: absolute; top: 38px; border-radius: 8px; overflow: hidden; background: #1e2029; cursor: pointer; }
 .hc img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -161,7 +161,7 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 #cBtns .pl:hover { background: rgba(255,255,255,0.22); }
 #cBtns #cTime { float: right; color: #cfd3e0; font-size: 22px; }
 /* film / dizi detay sayfası */
-#det { position: absolute; left: 0; top: 64px; width: 1280px; height: 656px; background: #0d0e12; display: none; z-index: 6; }
+#det { position: absolute; left: 0; top: 64px; right: 0; height: 656px; background: #0d0e12; display: none; z-index: 6; }
 #dPoster { position: absolute; left: 30px; top: 22px; width: 240px; height: 360px; border-radius: 10px; background-color: #1e2029;
   background-position: center; background-size: cover; background-repeat: no-repeat; }
 #dBody { position: absolute; left: 300px; top: 18px; right: 30px; bottom: 16px; overflow: hidden; }
@@ -189,7 +189,7 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 .del { float: right; color: #ef4444; padding: 0 8px; cursor: pointer; font-size: 22px; }
 .tile .del { position: absolute; left: 4px; top: 4px; float: none; background: rgba(0,0,0,0.75); border-radius: 6px; padding: 2px 6px; font-size: 20px; z-index: 2; }
 /* TV rehberi (kanal × saat tablosu) */
-#epg { position: absolute; left: 0; top: 64px; width: 1280px; height: 656px; background: #0d0e12; display: none; z-index: 6; overflow: hidden; }
+#epg { position: absolute; left: 0; top: 64px; right: 0; height: 656px; background: #0d0e12; display: none; z-index: 6; overflow: hidden; }
 .eh span { position: absolute; top: 10px; font-size: 18px; color: #9aa0b4; }
 .ec { position: absolute; left: 20px; width: 210px; height: 46px; line-height: 46px; font-size: 18px; white-space: nowrap; overflow: hidden;
   background: #16181f; border-radius: 6px; padding: 0 8px; box-sizing: border-box; cursor: pointer; }
@@ -218,14 +218,14 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 #qbox { position: absolute; left: 240px; right: 240px; top: 200px; padding: 30px; background: #16181f; border: 3px solid #3b82f6;
   border-radius: 16px; display: none; z-index: 16; text-align: center; }
 #qbox p { margin: 0 0 18px; font-size: 26px; color: #9aa0b4; }
-#site { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #000; display: none; z-index: 20; }
+#site { position: absolute; left: 0; top: 0; right: 0; height: 720px; background: #000; display: none; z-index: 20; }
 #siteBar { position: absolute; left: 0; top: 0; right: 0; height: 46px; background: #16181f; border-bottom: 2px solid #2a2d3a; font-size: 20px; line-height: 46px; }
 #siteBar span { display: inline-block; padding: 0 16px; cursor: pointer; }
 #siteBar #sbClose { background: #e4002b; color: #fff; font-weight: bold; }
 #siteBar #sbHome { background: #2a2d3a; margin-left: 6px; }
 #siteBar #sbTtl { color: #9aa0b4; cursor: default; }
 #siteBar #sbHint { float: right; color: #6b7184; font-size: 16px; cursor: default; }
-#siteFr { position: absolute; left: 0; top: 48px; width: 1280px; height: 672px; border: 0; background: #fff; }
+#siteFr { position: absolute; left: 0; top: 48px; right: 0; height: 672px; border: 0; background: #fff; }
 #pick { position: absolute; left: 340px; right: 340px; top: 120px; padding: 24px; background: #16181f; border: 3px solid #22c55e;
   border-radius: 16px; display: none; z-index: 13; }
 #pick p { margin: 0 0 12px; font-size: 24px; color: #9aa0b4; }
@@ -235,6 +235,24 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
   background: rgba(20,22,30,0.95); border: 2px solid #3b82f6; border-radius: 12px; display: none; z-index: 9; }
 #msg { position: absolute; left: 240px; right: 240px; bottom: 80px; text-align: center; font-size: 24px; padding: 16px;
   background: rgba(0,0,0,0.75); border-radius: 10px; display: none; }
+/* iPhone / dokunmatik: oynatıcı düğme şeridi, kanal okları, ekranı doldur */
+#tbar { position: absolute; left: 0; right: 0; top: 0; height: 110px; padding: 16px 28px; box-sizing: border-box; white-space: nowrap;
+  background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0)); display: none; z-index: 6; }
+.tb { display: inline-block; height: 76px; line-height: 76px; padding: 0 28px; margin-right: 16px; font-size: 34px; font-weight: bold; color: #fff;
+  background: rgba(30,32,41,0.88); border: 2px solid rgba(255,255,255,0.18); border-radius: 38px; vertical-align: top; cursor: pointer; }
+.tbr { float: right; margin: 0 0 0 16px; }
+#tbTitle { display: inline-block; max-width: 520px; line-height: 76px; font-size: 32px; font-weight: bold; color: #fff; overflow: hidden;
+  text-overflow: ellipsis; vertical-align: top; margin-left: 8px; }
+.tbz { position: absolute; top: 50%; margin-top: -80px; width: 120px; height: 160px; line-height: 146px; text-align: center; font-size: 120px;
+  color: #fff; background: rgba(0,0,0,0.45); border-radius: 22px; display: none; z-index: 6; cursor: pointer; }
+#tbPrev { left: 28px; } #tbNext { right: 28px; }
+body.tbon #player #tbar { display: block; }
+body.tbon.zp #player .tbz { display: block; }
+body.tbon #player #osd { display: none !important; }
+#player.mini #tbar, #player.mini .tbz { display: none !important; }
+body.fill #player:not(.mini) #v { object-fit: cover; }
+body.touch #pBack, body.touch #pPlay { display: none !important; }
+body.touch #hHeroTxt .hint { display: none; }
 </style>
 </head>
 <body>
@@ -245,7 +263,7 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 <div id="help">OK: oynat &nbsp;•&nbsp; P+/P− veya ▲▼: kanal &nbsp;•&nbsp; 0-9: kanal no &nbsp;•&nbsp; canlıda ◀▶: ses &nbsp;•&nbsp; Geri: geri &nbsp;•&nbsp; <b>Kırmızı</b>: favori</div>
 <div id="info"></div><div id="det"><div id="dPoster"></div><div id="dBody"><div id="dTitle"></div><div id="dMeta"></div><div id="dCrew"></div><div id="dPlot"></div><div id="dBtns"></div><div id="dSeas"></div><div id="dEps"></div></div></div><div id="keys"></div><div id="epg"></div><div id="pv"><div id="pvPic"></div><div id="pvTxt"></div><div id="pvEpg">📅 TV Rehberi  (Yeşil tuş)</div></div>
 <div id="toast"></div><div id="home"><div id="hHero"><div id="hHeroImg"></div><div id="hHeroFade"></div><div id="hHeroTxt"></div></div><div id="hRows"></div></div><div id="site"><div id="siteBar"><span id="sbClose">✕ Kapat</span><span id="sbHome">⌂ Ana sayfa</span><span id="sbTtl"></span><span id="sbHint">Sitede imleçle gez • çıkmak için ✕ Kapat</span></div><iframe id="siteFr" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe></div><div id="pick"></div><div id="panel"></div><div id="qbox"><p>Kanal, film, dizi ya da YouTube'da aranacak şeyi yaz — bitince OK / Enter</p><input id="q" type="text" autocomplete="off"></div><div id="num"></div>
-<div id="player"><video id="v" autoplay></video><iframe id="yt" allow="autoplay; encrypted-media; fullscreen" allowfullscreen tabindex="-1"></iframe><div id="osd"><div id="osdT"></div><div id="osdE"></div></div><div id="msg"></div><div id="ytShield"></div><div id="pFull">⛶</div><div id="ctl"><div id="cTitle"></div><div id="cBar"><div id="cFill"></div></div><div id="cBtns"><span id="cRew" class="rb" title="10 sn geri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 1-15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l-9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cPlay" class="rb" title="Oynat / duraklat"></span><span id="cFwd" class="rb" title="10 sn ileri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 0 15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cAud" class="pl">Ses</span><span id="cSub" class="pl">Altyazı</span><span id="cTime"></span></div></div><div id="pBack">◀ Geri</div><div id="pPlay">❚❚ / ▶</div></div>
+<div id="player"><video id="v" autoplay playsinline webkit-playsinline></video><iframe id="yt" allow="autoplay; encrypted-media; fullscreen" allowfullscreen tabindex="-1"></iframe><div id="osd"><div id="osdT"></div><div id="osdE"></div></div><div id="msg"></div><div id="ytShield"></div><div id="pFull">⛶</div><div id="ctl"><div id="cTitle"></div><div id="cBar"><div id="cFill"></div></div><div id="cBtns"><span id="cRew" class="rb" title="10 sn geri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 1-15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l-9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cPlay" class="rb" title="Oynat / duraklat"></span><span id="cFwd" class="rb" title="10 sn ileri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 0 15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cAud" class="pl">Ses</span><span id="cSub" class="pl">Altyazı</span><span id="cTime"></span></div></div><div id="pBack">◀ Geri</div><div id="pPlay">❚❚ / ▶</div><div id="tbar"><span data-tb="close" class="tb">✕</span><span data-tb="list" class="tb">☰ Liste</span><span id="tbTitle"></span><span data-tb="fit" id="tbFit" class="tb tbr">⤢ Doldur</span><span data-tb="mute" id="tbMute" class="tb tbr">🔊 Ses</span></div><div id="tbPrev" data-tb="prev" class="tbz">‹</div><div id="tbNext" data-tb="next" class="tbz">›</div></div>
 
 <script src="meta.js"></script>
 <script src="direct.js"></script>
@@ -267,11 +285,22 @@ function kcfgSet(c) { if (window.WOLF_KCFG_SET) window.WOLF_KCFG_SET(c); }
 var S = { col: 1, tab: 0, cats: [], cat: 0, items: [], item: 0, mode: "list", series: null, eps: [], listItem: 0,
   now: null, favs: {}, req: 0, playing: false };
 var V = document.getElementById("v");
+var TOUCH = ("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0;
+var SAFE = document.createElement("div");
+SAFE.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)";
+document.documentElement.appendChild(SAFE);
+/* 1280x720 düzen ekrana ölçeklenir. Telefon gibi 16:9'dan geniş ekranlarda sayfa yana genişler (sağda boşluk kalmaz);
+   menülerde çentik/kamera tarafı boş bırakılır, tam ekran oynatıcı ise kenardan kenara açılır. */
 function fitScreen() {
   var w = window.innerWidth || document.documentElement.clientWidth || 1280, h = window.innerHeight || document.documentElement.clientHeight || 720;
-  var k = Math.min(w / 1280, h / 720);
-  document.body.style.transform = document.body.style.webkitTransform = "scale(" + k + ")";
+  var full = S.playing && !S.mini, cs = null; try { cs = getComputedStyle(SAFE); } catch (e) {}
+  var il = full || !cs ? 0 : (parseFloat(cs.paddingLeft) || 0), ir = full || !cs ? 0 : (parseFloat(cs.paddingRight) || 0), aw = w - il - ir;
+  var k = Math.min(aw / 1280, h / 720), bw = 1280;
+  if (aw / h > 1280 / 720 + 0.01) { k = h / 720; bw = Math.round(aw / k); }
+  var b = document.body.style; b.width = bw + "px";
+  b.transform = b.webkitTransform = (il ? "translateX(" + il + "px) " : "") + "scale(" + k + ")";
 }
+if (TOUCH) document.body.className += " touch";
 fitScreen(); window.addEventListener("resize", fitScreen, false);
 if (window.WOLF_DIRECT) {
   var kb = document.getElementById("kbtn"); kb.style.display = "block";
@@ -1628,11 +1657,11 @@ function play(list, idx) {
     S.mini = true; S.playing = false; $("player").className = "mini";
   } else { S.mini = false; S.playing = true; $("player").className = ""; }
   S.wantFull = false;
-  $("player").style.display = "block"; $("v").style.display = "block";
+  $("player").style.display = "block"; $("v").style.display = "block"; fitScreen();
   startUrl(url);
   layout(); drawItems();
   osd((S.now.live && it.num ? it.num + "  " : "") + title, "");
-  $("pvTxt").innerHTML = "<b>▶ " + esc((it.num ? it.num + "  " : "") + title) + "</b>OK / tıkla: tam ekran";
+  $("pvTxt").innerHTML = "<b>▶ " + esc((it.num ? it.num + "  " : "") + title) + "</b>" + (TOUCH ? "Dokun: tam ekran" : "OK / tıkla: tam ekran") + "";
   if (S.now.live) epg(it);
 }
 function epg(it) {
@@ -1642,7 +1671,7 @@ function epg(it) {
     var l = d.epg_listings || [], out = [], i;
     for (i = 0; i < l.length && i < 2; i++) out.push(String(l[i].start || "").substr(11, 5) + "-" + String(l[i].end || "").substr(11, 5) + "  " + b64(l[i].title));
     /* tam ekranda yalnız kanal adı gösterilir; program akışı menüdeki önizlemede */
-    $("pvTxt").innerHTML = "<b>▶ " + esc((it.num ? it.num + "  " : "") + S.now.title) + "</b>" + esc(out.join("\n")) + "\n\nOK / tıkla: tam ekran";
+    $("pvTxt").innerHTML = "<b>▶ " + esc((it.num ? it.num + "  " : "") + S.now.title) + "</b>" + esc(out.join("\n")) + "\n\n" + (TOUCH ? "Dokun: tam ekran" : "OK / tıkla: tam ekran") + "";
   });
 }
 V.addEventListener("error", function () {
@@ -1711,7 +1740,7 @@ function zap(d, noWrap) {
   do { i += d; if (i < 0 || i >= len) { if (noWrap) return; i = (i + len) % len; } } while (n.list[i]._head);
   S.zapI = i;
   if (n.list === (S.mode === "eps" ? S.eps : S.items)) S.item = i;
-  osd(chName(n.list[i]), n.live ? "▲▼ kanal  •  OK: bilgi" : "");
+  osd(chName(n.list[i]), n.live ? (TOUCH ? "↕ kaydır: kanal  •  dokun: düğmeler" : "▲▼ kanal  •  OK: bilgi") : "");
   clearTimeout(zapT);
   zapT = setTimeout(function () { zapT = null; S.wantFull = S.playing; play(n.list, S.zapI); }, n.live ? 500 : 0);
 }
@@ -1746,16 +1775,16 @@ function muteToggle() { try { V.muted = !V.muted; } catch (e) {} volShow(); }
 function goFullPlayer() {
   if (!S.mini || !S.now) return;
   S.mini = false; S.playing = true; $("player").className = "";
-  layout();
+  fitScreen(); layout();
   if (S.now.live) osd(S.now.title, ""); else ctlShow();
 }
 function toMini() {
-  S.playing = false; S.mini = true; $("player").className = "mini"; $("ctl").style.display = "none";
+  S.playing = false; S.mini = true; $("player").className = "mini"; $("ctl").style.display = "none"; tbHide(); fitScreen();
   if (S.now && (S.now.list === S.items || S.now.list === S.eps)) S.item = S.now.idx;
   S.col = 2; drawAll();
 }
 function closePlayer() {
-  S.playing = false; S.mini = false; $("player").className = ""; $("ctl").style.display = "none"; setTimeout(preview, 0);
+  S.playing = false; S.mini = false; $("player").className = ""; $("ctl").style.display = "none"; setTimeout(preview, 0); tbHide(); fitScreen();
   if (S.home && kind() === "web") { S.pendItem = S.item; setTimeout(function () { webLoad(S.cats[S.cat]); }, 0); }
   ytOff();
   try { V.pause(); } catch (e) {}
@@ -2058,7 +2087,8 @@ function goFull() {
 /* ---------- sihirli kumanda (imleç): üzerine gel = seç, tıkla = aç ---------- */
 S.pointer = false;
 var pshowT = null;
-function setCls() { document.body.className = (KIDS ? "kids " : "") + (S.pointer ? "ptr" : "") + (S.pshow ? " pshow" : ""); }
+function setCls() { document.body.className = (KIDS ? "kids " : "") + (S.pointer ? "ptr" : "") + (S.pshow ? " pshow" : "") +
+  (TOUCH ? " touch" : "") + (S.tbon ? " tbon" : "") + (S.zp ? " zp" : "") + (S.fill ? " fill" : ""); }
 function setPtr(on) {
   if (S.pointer === on) return; S.pointer = on;
   if (!on) S.pshow = false;
@@ -2143,6 +2173,8 @@ document.addEventListener("click", function (e) {
     return;
   }
   if (S.playing) {
+    var tbe = t; while (tbe && tbe !== document.body && tbe.getAttribute && tbe.getAttribute("data-tb") === null) tbe = tbe.parentNode;
+    if (tbe && tbe.getAttribute && tbe.getAttribute("data-tb") !== null) { tbAct(tbe.getAttribute("data-tb")); return; }
     if (t.id === "pBack") { back(); return; }
     if (!S.now) return;
     if (t.id === "cRew") { seekBy(-10); return; }
@@ -2151,7 +2183,8 @@ document.addEventListener("click", function (e) {
     if (t.id === "cAud") { cycleAudio(); return; }
     if (t.id === "cSub") { cycleSub(); return; }
     if (t.id === "cBar" || t.id === "cFill") { seekTo(e); return; }
-    if (!S.now.live) { if ($("ctl").style.display === "block") togglePause(); else ctlShow(); }
+    if (!S.now.live) { if ($("ctl").style.display === "block") togglePause(); else ctlShow(); if (TOUCH) tbShow(); }
+    else if (TOUCH) { if (S.tbon) tbHide(); else tbShow(); }
     else osd(S.now.title, $("osdE").innerHTML);
     return;
   }
@@ -2186,6 +2219,48 @@ function wheel(e) {
   if (e.preventDefault) e.preventDefault();
 }
 if ("onwheel" in document) document.addEventListener("wheel", wheel, false); else document.addEventListener("mousewheel", wheel, false);
+
+/* ---------- 📱 iPhone / dokunmatik: düğme şeridi, kaydırarak kanal değiştirme, sessiz, ekranı doldur ----------
+   Yukarı kaydır: sonraki kanal  •  aşağı kaydır: önceki kanal  •  sola kaydır: liste (oynatma küçük pencerede sürer)
+   Film/dizide sağa/sola kaydır: 10 sn ileri/geri. Sesi telefonun yan tuşları ayarlar (iOS sayfaya ses düzeyi verdirmez). */
+var tbT = null;
+try { S.fill = localStorage.getItem("wolf_fill") === "1"; } catch (e) {}
+function tbShow() {
+  if (!TOUCH || !S.playing || !S.now) return;
+  S.tbon = true; S.zp = !!(S.now.live || S.now.ep);
+  $("tbTitle").innerHTML = esc(S.now.live && S.now.favItem ? chName(S.now.favItem) : (S.now.title || ""));
+  $("tbMute").innerHTML = V.muted ? "🔇 Sessiz" : "🔊 Ses";
+  $("tbFit").innerHTML = S.fill ? "⤡ Sığdır" : "⤢ Doldur";
+  setCls(); clearTimeout(tbT); tbT = setTimeout(tbHide, 4500);
+}
+function tbHide() { clearTimeout(tbT); if (!S.tbon) return; S.tbon = false; setCls(); }
+function tbAct(a) {
+  if (a === "close") { tbHide(); closePlayer(); return; }
+  if (a === "list") { tbHide(); back(); return; }
+  if (a === "prev" || a === "next") { zap(a === "next" ? 1 : -1); tbShow(); return; }
+  if (a === "mute") { muteToggle(); tbShow(); return; }
+  if (a === "fit") { S.fill = !S.fill; try { localStorage.setItem("wolf_fill", S.fill ? "1" : "0"); } catch (e) {} setCls(); tbShow(); }
+}
+var tsX = 0, tsY = 0, tsOn = false, swipeAt = 0;
+document.addEventListener("touchstart", function (e) {
+  tsOn = !!(S.playing && !S.mini && e.touches && e.touches.length === 1);
+  if (tsOn) { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; }
+}, { passive: true });
+document.addEventListener("touchmove", function (e) { if (tsOn && S.playing && !S.mini) e.preventDefault(); }, { passive: false });
+document.addEventListener("touchend", function (e) {
+  if (!tsOn) return; tsOn = false;
+  var t = e.changedTouches && e.changedTouches[0]; if (!t || !S.now) return;
+  var dx = t.clientX - tsX, dy = t.clientY - tsY, ax = Math.abs(dx), ay = Math.abs(dy);
+  if (Math.max(ax, ay) < 50) return;
+  swipeAt = new Date().getTime(); tbHide();
+  if (ay > ax) { if (S.now.live || S.now.ep) zap(dy < 0 ? 1 : -1); return; }
+  if (S.now.live) { if (dx < 0) tbAct("list"); return; }
+  if (!S.now.yt && !S.now.web) { seekBy(dx > 0 ? 10 : -10); ctlShow(); }
+}, { passive: true });
+/* kaydırma bitince gelen sahte tıklamayı yut */
+document.addEventListener("click", function (e) {
+  if (new Date().getTime() - swipeAt < 600) { e.stopImmediatePropagation(); if (e.preventDefault) e.preventDefault(); }
+}, true);
 
 /* PC'den açılış parametresi (ares-launch -p '{"tab":"family","cat":2}'): ekran görüntüsü / test için istenen sekmeyle açılır */
 function launchParams() { var p = {}; try { if (/[?&]tab=/.test(location.search)) { p.tab = (/[?&]tab=([^&]+)/.exec(location.search) || [])[1]; return p; } var r = (window.PalmSystem && window.PalmSystem.launchParams) || (window.webOSSystem && window.webOSSystem.launchParams) || "{}"; p = typeof r === "string" ? JSON.parse(r || "{}") : r; } catch (e) {} return p || {}; }
