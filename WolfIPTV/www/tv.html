@@ -118,6 +118,13 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 .dim .tile.foc { box-shadow: 0 0 0 3px #263453; }
 .row.muted { color: #9aa0b4; }
 #cats .row { height: 36px; line-height: 36px; font-size: 19px; }
+#cats .chip { display: inline-block; width: 71px; height: 56px; margin: 4px 4px 6px 0; padding-top: 5px; box-sizing: border-box; text-align: center;
+  font-size: 14px; line-height: 18px; font-weight: bold; color: #facc15; background: #1b1e27; border: 1px solid #2b2f3b; border-radius: 12px;
+  white-space: nowrap; overflow: hidden; cursor: pointer; vertical-align: top; }
+#cats .chip b { display: block; font-size: 20px; line-height: 24px; }
+#cats .chip:nth-of-type(4) { margin-right: 0; }
+#cats .chip.sel { background: #263453; }
+#cats .chip.foc { background: #2f5bd3; border-color: #2f5bd3; color: #fff; }
 #cats .row.hd { height: 30px; line-height: 34px; font-size: 14px; font-weight: bold; color: #8b93ad; letter-spacing: 1px; text-transform: uppercase; border-top: 1px solid #23262f; margin-top: 2px; cursor: default; }
 .dim .row.foc { background: #263453; }
 #help, #info { display: none !important; }
@@ -390,10 +397,19 @@ function drawTabs() {
 }
 function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (sel < st) st = sel; else if (sel >= st + R) st = sel - R + 1;
   if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }
+/* Favoriler / Son izlenenler / Devam et / En çok izlenenler: listenin başında tek satırlık kısa düğmeler (TV'de ▲▼ ile tek tek gezilir) */
+var CHIP = { "__fav": "<b>★</b>Favori", "__recent": "<b>🕘</b>Son izl.", "__cont": "<b>▶</b>Devam", "__top": "<b>🔥</b>Popüler" };
+function chipCount() { var q = 0; while (q < S.cats.length && CHIP.hasOwnProperty(String(S.cats[q].category_id))) q++; return q; }
 function drawCats() {
-  var n = S.cats.length, st = winStart("cS", S.cat, n, CROWS), h = "", i, c;
-  for (i = st; i < Math.min(n, st + CROWS); i++) {
-    c = S.cats[i]; c.category_id = String(c.category_id);
+  var n = S.cats.length, q = chipCount(), sh = q ? q - 1 : 0, R = n - sh, sr = q && S.cat < q ? 0 : S.cat - sh,
+    st = winStart("cS", sr, R, CROWS), h = "", i, c, r;
+  for (r = st; r < Math.min(R, st + CROWS); r++) {
+    if (q && r === 0) {
+      for (i = 0; i < q; i++) h += '<span data-i="' + i + '" class="chip' + (i === S.cat ? (S.col === 1 ? " foc" : " sel") : "") + '">' +
+        CHIP[S.cats[i].category_id] + "</span>";
+      continue;
+    }
+    i = r + sh; c = S.cats[i]; c.category_id = String(c.category_id);
     var vc = c.category_id.charAt(0) !== "_" || /^__(g_|y|rec|new|fam)/.test(c.category_id);   /* sağlayıcı ya da sanal (grup / yıl) kategori */
     var cn = S.counts && vc ? S.counts[String(c.category_id)] : null;
     if (isHd(c)) { h += '<div class="row hd">' + esc(c.category_name.replace(/^━\s*/, "")) + "</div>"; continue; }

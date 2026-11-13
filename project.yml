@@ -15,8 +15,8 @@ targets:
       path: WolfIPTV/Info.plist
       properties:
         CFBundleDisplayName: Wolf IPTV
-        CFBundleShortVersionString: "1.6"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "1.7"
+        CFBundleVersion: "8"
         UILaunchScreen: {}
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
