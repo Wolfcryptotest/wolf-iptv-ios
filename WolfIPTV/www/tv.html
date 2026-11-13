@@ -290,7 +290,7 @@ body.touch #hHeroTxt .hint { display: none; }
 /* Wolf IPTV - eski akıllı TV tarayıcıları için hafif ekran (ES5, kütüphanesiz) */
 var ROWS = 14, CROWS = 17;
 if (("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) { ROWS = 11; CROWS = 10; }   /* telefonda büyük satırlar */
-var PAGE_VER = "20261114-02";
+var PAGE_VER = "20261114-03";
 var DEROWS = 8;   /* sayfa güncellenince TV kendiliğinden yeniler */
 var TABS = [["home", "Ana sayfa"], ["live", "Canlı TV"], ["vod", "Filmler"], ["series", "Diziler"], ["search", "🔍 Ara"], ["web", "🌐 Web"]];
 /* aile filmleri: Filmler sekmesinin içinde "👪 Aile Filmleri" kategorisi (ayrı sekme yok) */
@@ -831,6 +831,7 @@ function pubOf(age) { var d = ageMs(age); return d ? new Date().getTime() - d : 
 var BAIT = /montaj|tepki|reaction|izledim|izliyorum|izleyelim|roblox|minecraft|gülme garantili|gulme garantili|challenge|şaka|prank|parodi|troll|komik anlar|en komik|sansürsüz|sansursuz|yapay zeka|\bai\b|fan ?made|gameplay|oynadım|oynuyorum|tiktok|trend|\bedit\b|\bvs\b|gizli gerçek|teori|aradım|aradik|açtılar|actilar|\.exe|gece 3|saat 3|korku|baştan sona|bastan sona|tüm hikaye|tum hikaye|john pork|skibidi/i;
 function trusted(l, q) {
   if (!l || !l.length || BAIT.test(q || "")) return l || [];
+  if (l[0] && l[0].off) return l;   /* kişinin kendi kanalı: videolarının hepsi gösterilir (skeç, şaka vb. elenmez) */
   var clean = [], good = [], ws = lc(q).match(/[a-zçğıöşü0-9]{4,}/g) || [], i, j, x, ch;
   for (i = 0; i < l.length; i++) { x = l[i]; if (BAIT.test(lc(x.title || x.name))) continue; clean.push(x);
     ch = lc(x.channel); var own = false; for (j = 0; j < ws.length; j++) if (ch.indexOf(ws[j]) >= 0) own = true;
@@ -1548,7 +1549,7 @@ function runSearch(q, typing) {
       yt = trusted(yt, q);
       for (var yq = 0; yt && yq < yt.length; yq++) { yt[yq]._q = q; yt[yq].pub = pubOf(yt[yq].age); yt[yq]._o = yq; }
       if (yt && yt.sort) yt.sort(function (a, b) { return newest(a, b) || a._o - b._o; });
-      add(yt && yt.length && yt[0].off ? "📺 " + yt[0].channel + " — kanalın en yeni videoları" : "YouTube — burada oynar", "yt", yt && yt.length ? yt : []);
+      add(yt && yt.length && yt[0].off ? "📺 " + yt[0].channel + (yt[0].chHandle ? "  @" + yt[0].chHandle : "") + (yt[0].chSubs ? "  •  " + yt[0].chSubs : "") + "  —  kanalın en yeni videoları" : "YouTube — burada oynar", "yt", yt && yt.length ? yt : []);
       S.items.push({ _head: "Dailymotion ve web'de video aranıyor…", _wait: 1 });
       if (S.items[S.item] && S.items[S.item]._head) S.item = first();
       drawItems();

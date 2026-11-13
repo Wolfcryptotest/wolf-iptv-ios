@@ -607,9 +607,11 @@
     rawText(url, function (h2) {
       var d2 = ytData(h2), out = [], seen = {}, nm = ch.name;
       if (!nm) { var mt = /<meta property="og:title" content="([^"]+)"/.exec(h2); nm = mt ? mt[1].replace(/&amp;/g, "&").replace(/&#39;/g, "'") : ch.handle ? "@" + ch.handle : ""; }
+      var subs = ch.subs || ((/"([0-9][0-9.,]*\s*(?:B|Mn|Mr|bin|milyon)?\s*abone)"/.exec(h2) || [])[1]) || "";
+      var hnd = ch.handle || ((/"canonicalBaseUrl":"\/@([^"\/]+)"/.exec(h2) || [])[1]) || "";
       if (d2) walk(d2, "videoRenderer", function (v) { if (!v.videoId || seen[v.videoId]) return; seen[v.videoId] = 1;
         out.push({ id: v.videoId, title: txt(v.title), channel: nm, len: txt(v.lengthText) || (function () { var o = v.thumbnailOverlays || [], i; for (i = 0; i < o.length; i++) if (o[i].thumbnailOverlayTimeStatusRenderer) return txt(o[i].thumbnailOverlayTimeStatusRenderer.text); return ""; })(),
-          views: parseInt(txt(v.viewCountText).replace(/[^0-9]/g, ""), 10) || 0, ver: ch.ver, off: true, thumb: "https://i.ytimg.com/vi/" + v.videoId + "/mqdefault.jpg" }); }, 40);
+          views: parseInt(txt(v.viewCountText).replace(/[^0-9]/g, ""), 10) || 0, ver: ch.ver, off: true, age: txt(v.publishedTimeText), chHandle: hnd, chSubs: subs, thumb: "https://i.ytimg.com/vi/" + v.videoId + "/mqdefault.jpg" }); }, 40);
       if (out.length) cb(out); else fail();
     }, fail, 15000);
   }
@@ -625,7 +627,8 @@
       var d = ytData(html), exact = null, close = null, first = null;
       if (d) walk(d, "channelRenderer", function (c) { if (!c.channelId) return;
         var nm = txt(c.title), hd = handleOf(c), pn = plain(nm), ph = plain(hd), bad = /fan|hayran|klip|edit|ozet|özet|kesit|shorts/i.test(nm + " " + hd),
-          o = { id: c.channelId, name: nm, handle: hd, ver: (c.ownerBadges || []).some(function (b) { return /VERIFIED|ARTIST/.test((b.metadataBadgeRenderer && b.metadataBadgeRenderer.style) || ""); }) };
+          sb = [txt(c.videoCountText), txt(c.subscriberCountText)].filter(function (z) { return /abone|subscriber/i.test(z); })[0] || "",
+          o = { id: c.channelId, name: nm, handle: hd, subs: sb, ver: (c.ownerBadges || []).some(function (b) { return /VERIFIED|ARTIST/.test((b.metadataBadgeRenderer && b.metadataBadgeRenderer.style) || ""); }) };
         if (!first) first = o;
         if (!exact && !bad && (pn === nq || ph === nq)) exact = o;   /* ad ya da @kullanıcı adı birebir */
         else if (!close && !bad && (sameName(nm, q) || sameName(hd, q)) && (o.ver || o === first)) close = o; }, 12);
