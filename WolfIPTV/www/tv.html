@@ -245,7 +245,9 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
   text-overflow: ellipsis; vertical-align: top; margin-left: 8px; }
 .tbz { position: absolute; top: 50%; margin-top: -80px; width: 120px; height: 160px; line-height: 146px; text-align: center; font-size: 120px;
   color: #fff; background: rgba(0,0,0,0.45); border-radius: 22px; display: none; z-index: 6; cursor: pointer; }
-#tbPrev { left: 28px; } #tbNext { right: 28px; }
+#tbPrev { left: calc(28px + var(--sl, 0px)); } #tbNext { right: calc(28px + var(--sr, 0px)); }
+#tbar { padding-left: calc(28px + var(--sl, 0px)); padding-right: calc(28px + var(--sr, 0px)); }
+body.touch #osd, body.touch #ctl { padding-left: calc(40px + var(--sl, 0px)); padding-right: calc(40px + var(--sr, 0px)); }
 body.tbon #player #tbar { display: block; }
 body.tbon.zp #player .tbz { display: block; }
 body.tbon #player #osd { display: none !important; }
@@ -291,14 +293,29 @@ SAFE.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hi
 document.documentElement.appendChild(SAFE);
 /* 1280x720 düzen ekrana ölçeklenir. Telefon gibi 16:9'dan geniş ekranlarda sayfa yana genişler (sağda boşluk kalmaz);
    menülerde çentik/kamera tarafı boş bırakılır, tam ekran oynatıcı ise kenardan kenara açılır. */
+/* çentikli iPhone (Dynamic Island / kulaklık tarafı): env() 0 dönerse yatayda iki yana güvenli pay ver */
+function safeIns(w, h) {
+  var cs = null, l = 0, r = 0; try { cs = getComputedStyle(SAFE); } catch (e) {}
+  if (cs) { l = parseFloat(cs.paddingLeft) || 0; r = parseFloat(cs.paddingRight) || 0; }
+  var sw = Math.max(screen.width || 0, screen.height || 0), sh = Math.min(screen.width || 0, screen.height || 0);
+  if (/iPhone/.test(navigator.userAgent) && w > h && sh && sw / sh > 1.9) {
+    var m = 54 * w / sw;   /* 54 nokta → sayfa pikseli */
+    l = Math.max(l, m); r = Math.max(r, m);
+  }
+  return [l, r];
+}
+/* 1280x720 düzen ekrana ölçeklenir. Telefon gibi 16:9'dan geniş ekranlarda sayfa yana genişler (sağda boşluk kalmaz);
+   menülerde çentik/kamera tarafı boş bırakılır, tam ekran oynatıcıda görüntü kenardan kenara, düğmeler çentiğin dışında. */
 function fitScreen() {
   var w = window.innerWidth || document.documentElement.clientWidth || 1280, h = window.innerHeight || document.documentElement.clientHeight || 720;
-  var full = S.playing && !S.mini, cs = null; try { cs = getComputedStyle(SAFE); } catch (e) {}
-  var il = full || !cs ? 0 : (parseFloat(cs.paddingLeft) || 0), ir = full || !cs ? 0 : (parseFloat(cs.paddingRight) || 0), aw = w - il - ir;
+  var full = S.playing && !S.mini, ins = safeIns(w, h);
+  var il = full ? 0 : ins[0], ir = full ? 0 : ins[1], aw = w - il - ir;
   var k = Math.min(aw / 1280, h / 720), bw = 1280;
   if (aw / h > 1280 / 720 + 0.01) { k = h / 720; bw = Math.round(aw / k); }
   var b = document.body.style; b.width = bw + "px";
   b.transform = b.webkitTransform = (il ? "translateX(" + il + "px) " : "") + "scale(" + k + ")";
+  b.setProperty("--sl", (full ? Math.round(ins[0] / k) : 0) + "px");
+  b.setProperty("--sr", (full ? Math.round(ins[1] / k) : 0) + "px");
 }
 if (TOUCH) document.body.className += " touch";
 fitScreen(); window.addEventListener("resize", fitScreen, false);
