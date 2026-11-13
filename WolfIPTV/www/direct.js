@@ -458,7 +458,7 @@
     for (i = 0; i < toks.length; i++) { if (/^\d+$/.test(toks[i])) nums.push(toks[i]); else if (toks[i].length >= 3 && stop.indexOf(toks[i]) < 0) words.push(toks[i]); }
     var need = words.length ? Math.max(1, Math.ceil(words.length * 0.6)) : 0;
     return res.filter(function (r) {
-      var t = fold(r.title), tt = t.match(/[a-z0-9]+/g) || [], hit = 0;
+      var t = fold(r.title + " " + (r.channel || "")), tt = t.match(/[a-z0-9]+/g) || [], hit = 0;
       for (j = 0; j < nums.length; j++) if (tt.indexOf(nums[j]) < 0) return false;
       for (j = 0; j < words.length; j++) if (t.indexOf(words[j]) >= 0) hit++;
       return hit >= need;
@@ -472,9 +472,9 @@
   }
   /* aramada "fragman", "klip", "özet" vb. istenirse o tür kısa videolar ayıklanmaz */
   var WANT = /fragman|teaser|trailer|tanıtım|tanitim|\bklip|\bclip\b|özet|ozet|\bshorts?\b|kamera arkas|sahne|tepki|reaction|inceleme|review/i;
-  function ytSearch(q, cb) {
-    var want = WANT.test(q);
-    rawText("https://www.youtube.com/results?hl=tr&gl=TR&sp=" + (want ? "CAI%3D" : "CAISAhgC") + "&search_query=" + encodeURIComponent(q), function (html) {
+  function ytSearch(q, cb, any) {
+    var want = WANT.test(q) || !!any;
+    rawText("https://www.youtube.com/results?hl=tr&gl=TR" + (any ? "" : "&sp=" + (want ? "CAI%3D" : "CAISAhgC")) + "&search_query=" + encodeURIComponent(q), function (html) {
       var out = [], seen = {}, a = html.indexOf("var ytInitialData = "), b, data, stack, o, k, v, runs, own;
       if (a < 0) { cb([]); return; }
       b = html.indexOf(";</script>", a);
@@ -495,7 +495,7 @@
           for (k in o) if (o.hasOwnProperty(k) && o[k] && typeof o[k] === "object") stack.push(o[k]);
         }
       }
-      if (!want) out = out.filter(function (r) { return lenSec(r.len) >= 1200 && !JUNK.test(r.title); });
+      if (!want) out = out.filter(function (r) { return sameName(r.channel, q) || (lenSec(r.len) >= 1200 && !JUNK.test(r.title)); });
       cb(relevant(out, q));
     }, function () { cb([]); }, 15000);
   }
@@ -555,7 +555,7 @@
         if (!exact && fold(nm).replace(/[^a-z0-9]/g, "") === nq) exact = o;
         else if (!close && o.ver && sameName(nm, q) && !/fan|hayran|klip|edit|ozet|özet/i.test(nm)) close = o; }, 10);
       ch = exact || close;
-      if (!ch) { ytSearch(q, cb); return; }
+      if (!ch) { ytSearch(q, function (r) { if (r && r.length) cb(r); else ytSearch(q, cb, true); }); return; }
       rawText("https://www.youtube.com/channel/" + ch.id + "/videos?hl=tr&gl=TR", function (h2) {
         var d2 = ytData(h2), out = [], seen = {};
         if (d2) walk(d2, "videoRenderer", function (v) { if (!v.videoId || seen[v.videoId]) return; seen[v.videoId] = 1;

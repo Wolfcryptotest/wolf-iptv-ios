@@ -1450,6 +1450,8 @@ function runSearch(q, typing) {
   q = String(q || "").replace(/^\s+|\s+$/g, "");
   closeQ();
   if (q.length < 2) { toast("En az 2 harf yaz"); return; }
+  var ytm = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/))([A-Za-z0-9_-]{11})/.exec(q);
+  if (ytm && !KIDS) { S.wantFull = true; play([{ _k: "yt", id: ytm[1], title: "YouTube videosu", channel: "", thumb: "https://i.ytimg.com/vi/" + ytm[1] + "/mqdefault.jpg" }], 0); return; }
   var i = 0, my = ++S.req, keepCol = typing && document.activeElement === $("sq");
   HIST = [q];   /* yalnız şu anki arama görünür */
   if (KIDS) { var kh = [q]; for (i = 0; i < KHIST.length && kh.length < 6; i++) if (lc(KHIST[i]) !== lc(q) && lc(q).indexOf(lc(KHIST[i])) !== 0) kh.push(KHIST[i]);
@@ -1473,13 +1475,13 @@ function runSearch(q, typing) {
     }
     S.items.push({ _head: "YouTube sonuçları yükleniyor…", _wait: 1 });
     S.loadingMsg = ""; S.item = first(); drawAll();
-    api("yt", { q: q }, function (yt) {
+    api("ytch", { q: q }, function (yt) {
       if (my !== S.req) return;
       if (S.items.length && S.items[S.items.length - 1]._wait) S.items.pop();
       yt = trusted(yt, q);
       for (var yq = 0; yt && yq < yt.length; yq++) { yt[yq]._q = q; yt[yq].pub = pubOf(yt[yq].age); yt[yq]._o = yq; }
       if (yt && yt.sort) yt.sort(function (a, b) { return newest(a, b) || a._o - b._o; });
-      add("YouTube — burada oynar", "yt", yt && yt.length ? yt : []);
+      add(yt && yt.length && yt[0].off ? "📺 " + yt[0].channel + " — kanalın en yeni videoları" : "YouTube — burada oynar", "yt", yt && yt.length ? yt : []);
       S.items.push({ _head: "Dailymotion ve web'de video aranıyor…", _wait: 1 });
       if (S.items[S.item] && S.items[S.item]._head) S.item = first();
       drawItems();
