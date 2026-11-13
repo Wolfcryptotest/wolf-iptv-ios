@@ -50,6 +50,15 @@ body.kids #top { background: linear-gradient(90deg, #1e3a8a, #6d28d9); }
 .row.play { color: #7cc4ff; font-weight: bold; }
 .row.head { color: #facc15; font-weight: bold; }
 .row .cnt { float: right; color: #ef4444; font-weight: bold; margin-left: 10px; }
+.row .cnm { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ★ 🕘 ► 🔥 kısayollar: sol sütunun en üstünde tek satır (eskiden 4 ayrı satırdı) */
+.qc { display: inline-block; box-sizing: border-box; height: 46px; padding-top: 3px; text-align: center; vertical-align: top; cursor: pointer; border-radius: 8px; color: #cfd3e0; }
+.qc b { display: block; font-size: 20px; line-height: 22px; color: #facc15; font-weight: normal; }
+.qc i { display: block; font-style: normal; font-size: 13px; line-height: 17px; color: #9aa0b4; white-space: nowrap; overflow: hidden; }
+.qc.sel { background: #263453; } .qc.foc { background: #2f5bd3; } .qc.foc i, .qc.sel i { color: #fff; }
+body.touch .qc { height: 58px; margin: 0 0 4px; border: 3px solid #121319; background: #1b1d25; border-radius: 12px; padding-top: 4px; }
+body.touch .qc b { font-size: 22px; line-height: 26px; } body.touch .qc i { font-size: 14px; }
+body.touch .qc.sel, body.touch .qc.foc { background: #4a0d12; }
 /* afiş ızgarası (filmler / diziler) */
 #items.grid { background: transparent; overflow: visible; }
 .tile { position: absolute; width: 122px; height: 183px; border-radius: 10px; overflow: hidden; background: #1e2029; cursor: pointer; }
@@ -290,7 +299,7 @@ body.touch #hHeroTxt .hint { display: none; }
 /* Wolf IPTV - eski akıllı TV tarayıcıları için hafif ekran (ES5, kütüphanesiz) */
 var ROWS = 14, CROWS = 17;
 if (("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) { ROWS = 11; CROWS = 10; }   /* telefonda büyük satırlar */
-var PAGE_VER = "20261114-03";
+var PAGE_VER = "20261114-04";
 var DEROWS = 8;   /* sayfa güncellenince TV kendiliğinden yeniler */
 var TABS = [["home", "Ana sayfa"], ["live", "Canlı TV"], ["vod", "Filmler"], ["series", "Diziler"], ["search", "🔍 Ara"], ["web", "🌐 Web"]];
 /* aile filmleri: Filmler sekmesinin içinde "👪 Aile Filmleri" kategorisi (ayrı sekme yok) */
@@ -415,16 +424,25 @@ function drawTabs() {
 function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (S[key + "M"]) { if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }   /* parmakla kaydırıldı */
   if (sel < st) st = sel; else if (sel >= st + R) st = sel - R + 1;
   if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }
+var QIC = { __fav: ["★", "Favori"], __recent: ["🕘", "Son izl."], __cont: ["►", "Devam"], __top: ["🔥", "Çok izl."] };   /* sol sütunun üstünde tek satır kısayol */
+function isQ(c) { return !!c && QIC.hasOwnProperty(String(c.category_id)); }
 function drawCats() {
   var p0 = S.cS || 0, same = S._cRef === S.cats; S._cRef = S.cats;
-  var n = S.cats.length, st = winStart("cS", S.cat, n, CROWS), h = "", i, c;
-  for (i = st; i < Math.min(n, st + CROWS); i++) {
+  var nq = 0; while (nq < S.cats.length && isQ(S.cats[nq])) nq++;
+  var n = S.cats.length, st = winStart("cS", S.cat, n, CROWS + Math.max(0, nq - 1)), h = "", i, c, R;
+  if (st > 0 && nq) st = winStart("cS", S.cat, n, CROWS);   /* aşağı kaydırılınca normal satır sayısı */
+  R = st < nq ? CROWS + nq - 1 : CROWS;
+  if (st > 0 && st < nq) { st = nq; S.cS = st; }   /* kısayol satırı bölünmesin */
+  for (i = st; i < Math.min(n, st + R); i++) {
     c = S.cats[i]; c.category_id = String(c.category_id);
-    var vc = c.category_id.charAt(0) !== "_" || /^__(g_|y|rec|new|fam)/.test(c.category_id);   /* sağlayıcı ya da sanal (grup / yıl) kategori */
+    if (i < nq) { var q = QIC[c.category_id];
+      h += '<div data-i="' + i + '" class="qc' + (i === S.cat ? (S.col === 1 ? " foc" : " sel") : "") + '" style="width:' + Math.floor(100 / nq) + '%"><b>' + q[0] + "</b><i>" + q[1] + "</i></div>"; continue; }
+    var vc = c.category_id.charAt(0) !== "_" || /^__(g_|y|rec|new|fam|day)/.test(c.category_id);   /* sağlayıcı ya da sanal (grup / yıl) kategori */
     var cn = S.counts && vc ? S.counts[String(c.category_id)] : null;
+    if (c.category_id === "" && S.counts) { if (S.counts._tot === undefined) { var tt = 0, kk; for (kk in S.counts) if (S.counts.hasOwnProperty(kk) && kk.charAt(0) !== "_") tt += +S.counts[kk] || 0; S.counts._tot = tt; } cn = S.counts._tot || null; vc = true; }
     if (isHd(c)) { h += '<div class="row hd">' + esc(c.category_name.replace(/^━\s*/, "")) + "</div>"; continue; }
     h += '<div data-i="' + i + '" class="row' + (i === S.cat ? (S.col === 1 ? " foc" : " sel") : "") + (vc ? "" : " head") + '">' +
-      (cn ? '<span class="cnt">' + cn + "</span>" : "") + esc(c.category_name) + "</div>";
+      (cn ? '<span class="cnt">' + cn + "</span>" : "") + '<span class="cnm">' + esc(c.category_name) + "</span></div>";
   }
   $("cats").innerHTML = h || '<div class="row muted">Yükleniyor…</div>';
   if (same && st !== p0) slide($("cats"), 0, (st - p0) * (TOUCH ? 60 : 42));

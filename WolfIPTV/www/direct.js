@@ -734,12 +734,14 @@
         var out = [], i, n = 0;
         for (i = 0; i < cats.length; i++) { if (isSep(cats[i].category_name)) continue; if (set[String(cats[i].category_id)]) { n++; if (locked()) continue; } out.push(cats[i]); }
         if (n && locked()) out.push({ category_id: "__adult", category_name: "🔒 +18 (" + n + " kategori, PIN)" });
-        var oc = orgCats(cm[1], out);
-        if (cm[1] === "series") oc = dayCats().concat(insAfterFirst(oc, yearCats("series")));
-        if (cm[1] === "vod") oc = insAfterFirst(oc, yearCats("vod"));
-        if (cm[1] === "vod") {   /* Filmler içinde: 👪 Aile Filmleri (oyuncularla çekilmiş, animasyon yok) */
-          var at = 0, j; for (j = 1; j < oc.length; j++) if (String(oc[j].category_id).indexOf("__hd") === 0) { at = j; break; }
-          oc.splice(at, 0, { category_id: "__hdA", category_name: "━ Aile" }, { category_id: "__fam", category_name: "👪 Aile Filmleri" });
+        var oc;
+        if (cm[1] === "live") oc = orgCats(cm[1], out);
+        else {   /* Filmler / Diziler: sağlayıcının kendi kategorileri, kendi sırasıyla (örnek uygulamadaki gibi); bizim ekstralar en altta */
+          var prov = out.filter(function (c) { return String(c.category_id).charAt(0) !== "_"; }), tail = out.filter(function (c) { return String(c.category_id).charAt(0) === "_"; });
+          oc = prov;
+          if (cm[1] === "vod") oc = oc.concat([{ category_id: "__hdA", category_name: "━ Aile" }, { category_id: "__fam", category_name: "👪 Aile Filmleri" }], yearCats("vod"));
+          if (cm[1] === "series") oc = oc.concat(dayCats(), yearCats("series"));
+          oc = oc.concat(tail);
         }
         ok(oc);
       }, cats);
