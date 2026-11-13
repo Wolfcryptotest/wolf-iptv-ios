@@ -24,6 +24,8 @@ struct WebView: UIViewRepresentable {
         wv.backgroundColor = UIColor(red: 0.05, green: 0.05, blue: 0.07, alpha: 1)
         wv.scrollView.isScrollEnabled = false
         wv.scrollView.contentInsetAdjustmentBehavior = .never
+        // YouTube aramasında masaüstü sayfası gelsin (mobil m.youtube sayfası farklı biçimde)
+        wv.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
         if let dir = Bundle.main.url(forResource: "www", withExtension: nil) {
             wv.loadFileURL(dir.appendingPathComponent("login.html"), allowingReadAccessTo: dir)
         }

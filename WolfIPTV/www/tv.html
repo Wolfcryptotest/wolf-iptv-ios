@@ -298,7 +298,7 @@ function safeIns(w, h) {
   var cs = null, l = 0, r = 0; try { cs = getComputedStyle(SAFE); } catch (e) {}
   if (cs) { l = parseFloat(cs.paddingLeft) || 0; r = parseFloat(cs.paddingRight) || 0; }
   var sw = Math.max(screen.width || 0, screen.height || 0), sh = Math.min(screen.width || 0, screen.height || 0);
-  if (/iPhone/.test(navigator.userAgent) && w > h && sh && sw / sh > 1.9) {
+  if (TOUCH && w > h && sh && sw / sh > 1.9) {
     var m = 54 * w / sw;   /* 54 nokta → sayfa pikseli */
     l = Math.max(l, m); r = Math.max(r, m);
   }

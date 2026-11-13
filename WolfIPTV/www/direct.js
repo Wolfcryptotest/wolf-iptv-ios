@@ -472,18 +472,28 @@
   }
   /* aramada "fragman", "klip", "özet" vb. istenirse o tür kısa videolar ayıklanmaz */
   var WANT = /fragman|teaser|trailer|tanıtım|tanitim|\bklip|\bclip\b|özet|ozet|\bshorts?\b|kamera arkas|sahne|tepki|reaction|inceleme|review/i;
+  /* YouTube sayfasındaki ytInitialData: masaüstü {…} biçimi ya da mobil (m.youtube) '…\x7b…' metin biçimi */
+  function ytInit(html) {
+    var a = html.indexOf("var ytInitialData = "), b, m;
+    if (a >= 0 && html.charAt(a + 20) === "{") { b = html.indexOf(";</script>", a); try { return JSON.parse(html.substring(a + 20, b)); } catch (e) {} }
+    m = /ytInitialData\s*=\s*'((?:\\.|[^'\\])*)'/.exec(html);
+    if (m) try { return JSON.parse(m[1].replace(/\\x([0-9a-fA-F]{2})/g, function (z, h) { return String.fromCharCode(parseInt(h, 16)); }).replace(/\\(['\\\/])/g, "$1")); } catch (e) {}
+    m = /window\["ytInitialData"\]\s*=\s*(\{[\s\S]*?\});\s*(?:window|<\/script)/.exec(html);
+    if (m) try { return JSON.parse(m[1]); } catch (e) {}
+    return null;
+  }
   function ytSearch(q, cb, any) {
     var want = WANT.test(q) || !!any;
     rawText("https://www.youtube.com/results?hl=tr&gl=TR" + (any ? "" : "&sp=" + (want ? "CAI%3D" : "CAISAhgC")) + "&search_query=" + encodeURIComponent(q), function (html) {
-      var out = [], seen = {}, a = html.indexOf("var ytInitialData = "), b, data, stack, o, k, v, runs, own;
-      if (a < 0) { cb([]); return; }
-      b = html.indexOf(";</script>", a);
-      try { data = JSON.parse(html.substring(a + 20, b)); } catch (e) { cb([]); return; }
+      var out = [], seen = {}, data = ytInit(html), stack, o, k, v, runs, own;
+      if (!data) { cb([]); return; }
       stack = [data];
       while (stack.length && out.length < 40) {
         o = stack.shift();
         if (o && typeof o === "object") {
-          v = o.videoRenderer;
+          v = o.videoRenderer || o.compactVideoRenderer || o.videoWithContextRenderer;
+          if (v && !v.title && v.headline) v.title = v.headline;
+          if (v && !v.ownerText && (v.shortBylineText || v.longBylineText)) v.ownerText = v.shortBylineText || v.longBylineText;
           if (v && v.videoId && !seen[v.videoId]) {
             seen[v.videoId] = 1; runs = (v.title && v.title.runs) || []; own = ((v.ownerText && v.ownerText.runs) || [{}])[0] || {};
             out.push({ id: v.videoId, title: runs.map(function (r) { return r.text || ""; }).join(""), channel: own.text || "",
@@ -540,8 +550,7 @@
   }
 
   /* ---------- resmî kanal (abonelik gibi): aramanın adıyla aynı isimli kanalın en yeni videoları ---------- */
-  function ytData(html) { var a = html.indexOf("var ytInitialData = "), b; if (a < 0) return null; b = html.indexOf(";</script>", a);
-    try { return JSON.parse(html.substring(a + 20, b)); } catch (e) { return null; } }
+  function ytData(html) { return ytInit(html); }
   function walk(o, key, cb, max) { var st = [o], n = 0, x, k; while (st.length && n < (max || 60)) { x = st.shift();
       if (x && typeof x === "object") { if (x[key]) { cb(x[key]); n++; continue; } for (k in x) if (x.hasOwnProperty(k) && x[k] && typeof x[k] === "object") st.push(x[k]); } } }
   function txt(t) { return t ? (t.simpleText || ((t.runs || []).map(function (r) { return r.text || ""; }).join(""))) : ""; }
