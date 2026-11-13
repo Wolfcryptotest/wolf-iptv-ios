@@ -290,7 +290,7 @@ body.touch #hHeroTxt .hint { display: none; }
 /* Wolf IPTV - eski akıllı TV tarayıcıları için hafif ekran (ES5, kütüphanesiz) */
 var ROWS = 14, CROWS = 17;
 if (("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) { ROWS = 11; CROWS = 10; }   /* telefonda büyük satırlar */
-var PAGE_VER = "20261114-01";
+var PAGE_VER = "20261114-02";
 var DEROWS = 8;   /* sayfa güncellenince TV kendiliğinden yeniler */
 var TABS = [["home", "Ana sayfa"], ["live", "Canlı TV"], ["vod", "Filmler"], ["series", "Diziler"], ["search", "🔍 Ara"], ["web", "🌐 Web"]];
 /* aile filmleri: Filmler sekmesinin içinde "👪 Aile Filmleri" kategorisi (ayrı sekme yok) */
@@ -356,6 +356,14 @@ function kidsBtn() {
 }
 
 function $(id) { return document.getElementById(id); }
+/* ↕ kayma efekti: liste bir satır aşağı/yukarı kayınca yeni satırlar yumuşakça yerine otursun (TV kumandası ve parmak) */
+function slide(el, dx, dy) {
+  if (!el || (!dx && !dy)) return; var ch = el.children, i, st;
+  if (Math.abs(dy) > 700) dy = dy > 0 ? 700 : -700; if (Math.abs(dx) > 900) dx = dx > 0 ? 900 : -900;
+  for (i = 0; i < ch.length; i++) { st = ch[i].style; st.webkitTransition = st.transition = "none"; st.webkitTransform = st.transform = "translate(" + dx + "px," + dy + "px)"; }
+  void el.offsetHeight;
+  for (i = 0; i < ch.length; i++) { st = ch[i].style; st.webkitTransition = st.transition = "-webkit-transform .2s ease-out, transform .2s ease-out"; st.webkitTransform = st.transform = "translate(0,0)"; }
+}
 function esc(s) { s = (s === null || s === undefined) ? "" : String(s);
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 function noEmo(t) { return String(t || "").replace(/[\uD800-\uDFFF]/g, "").replace(/[\u2600-\u27BF\uFE0F\u200D]/g, "").replace(/\s{2,}/g, " "); }   /* TV fontunda olmayan emojiler "��" görünmesin */
@@ -408,6 +416,7 @@ function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (S[k
   if (sel < st) st = sel; else if (sel >= st + R) st = sel - R + 1;
   if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }
 function drawCats() {
+  var p0 = S.cS || 0, same = S._cRef === S.cats; S._cRef = S.cats;
   var n = S.cats.length, st = winStart("cS", S.cat, n, CROWS), h = "", i, c;
   for (i = st; i < Math.min(n, st + CROWS); i++) {
     c = S.cats[i]; c.category_id = String(c.category_id);
@@ -418,6 +427,7 @@ function drawCats() {
       (cn ? '<span class="cnt">' + cn + "</span>" : "") + esc(c.category_name) + "</div>";
   }
   $("cats").innerHTML = h || '<div class="row muted">Yükleniyor…</div>';
+  if (same && st !== p0) slide($("cats"), 0, (st - p0) * (TOUCH ? 60 : 42));
 }
 function isHd(c) { return !!c && String(c.category_id).indexOf("__hd") === 0; }   /* menü başlığı: seçilemez */
 function skipHd(d) { var n = S.cats.length, g = 0; while (S.cats[S.cat] && isHd(S.cats[S.cat]) && g++ < n) { S.cat += d; if (S.cat < 0) { S.cat = 0; d = 1; } if (S.cat >= n) { S.cat = n - 1; d = -1; } } }
@@ -484,7 +494,7 @@ function poster(it) { return it.stream_icon || it.cover || (it.info && it.info.m
 function posOf(it) { var k = vk(), key = k === "series" ? (it._ep_id ? "ep:" + it._ep_id : "") : "vod:" + it.stream_id; return key && POS[key]; }
 function drawGrid() {
   var list = S.items, n = list.length, row = Math.floor(S.item / COLS), st, h = "", i, it, k = vk(), x, y, img, fav, p, cls;
-  st = S.gS || 0;
+  st = S.gS || 0; var g0 = st, gsame = S._gRef === list; S._gRef = list;
   if (S.gSM) { var gmax = Math.max(0, Math.ceil(n / COLS) - GROWS); if (st > gmax) st = gmax; }
   else if (row < st) st = row; else if (row >= st + GROWS) st = row - GROWS + 1;
   if (st < 0) st = 0; S.gS = st;
@@ -499,7 +509,9 @@ function drawGrid() {
       (p && p[0] ? '<div class="pr" style="width:' + (p[2] ? Math.min(100, Math.round(p[0] / p[2] * 100)) : 30) + '%"></div>' : "") + "</div>";
   }
   $("items").className = "col grid"; preview();
+  if (!gsame) g0 = st;
   $("items").innerHTML = h || '<div class="row muted">' + (window.WOLF_PENDING ? "⏳ Yaş bilgileri kontrol ediliyor (" + window.WOLF_PENDING + ")… liste kendiliğinden dolacak." : "Bu listede içerik yok.") + "</div>";
+  if (st !== g0) slide($("items"), 0, (st - g0) * (TH + GY));
   var cur = list[S.item];
   $("info").innerHTML = cur ? esc(cur.name || "") + (cur.year || cur.releaseDate ? " (" + esc(cur.year || String(cur.releaseDate).substr(0, 4)) + ")" : "") +
     (cur.rating ? " &nbsp;★ " + esc(cur.rating) : "") + " &nbsp; <span style='color:#6b7184'>" + (S.item + 1) + " / " + n + "</span>" : "";
@@ -509,7 +521,8 @@ function drawItems() {
   if (gridMode()) { drawGrid(); return; }
   if (vgMode()) { drawVGrid(); return; }
   $("items").className = "col";
-  var list = S.mode === "eps" ? S.eps : S.items, n = list.length, st = winStart("iS", S.item, n, rowsNow()), h = "", i, it, fav, cls, k = vk();
+  var list = S.mode === "eps" ? S.eps : S.items, i0 = S.iS || 0, isame = S._iRef === list; S._iRef = list;
+  var n = list.length, st = winStart("iS", S.item, n, rowsNow()), h = "", i, it, fav, cls, k = vk();
   preview();
   if (S.loadingMsg) { $("items").innerHTML = '<div class="row muted">' + esc(S.loadingMsg) + "</div>"; return; }
   for (i = st; i < Math.min(n, st + rowsNow()); i++) {
@@ -535,6 +548,7 @@ function drawItems() {
     }
   }
   $("items").innerHTML = h || '<div class="row muted">' + (S.mode === "eps" ? "Bölüm bulunamadı." : "Bu listede içerik yok.") + "</div>";
+  if (isame && st !== i0) slide($("items"), 0, (st - i0) * (TOUCH ? 52 : 42));
   var cur = list[S.item];
   if (cur && !cur._head) {
     $("info").innerHTML = esc(S.mode === "eps" ? (cur.title || "") : (cur.name || cur.title || "")) + " &nbsp; <span style='color:#6b7184'>" + (S.item + 1) + " / " + n + "</span>";
@@ -669,6 +683,7 @@ function homeDraw() {
   }
   /* satırlar: seçili satır görünür kalacak şekilde kaydır */
   var hs = [], tot = 0; for (r = 0; r < rows.length; r++) { hs[r] = 38 + HCW[rows[r].sz][1] + 26; }
+  var hsame = S._hRef === rows; S._hRef = rows; var h0 = S.hrS || 0, ho0 = (S.hoff || []).slice(0);
   var st = S.hrS || 0; if (S.hr < st) st = S.hr; while (st < S.hr) { tot = 0; for (i = st; i <= S.hr; i++) tot += hs[i]; if (tot <= 426) break; st++; } S.hrS = st;
   for (r = st; r < rows.length && top < 426; r++) {
     sz = HCW[rows[r].sz]; w = sz[0]; hh = sz[1]; per = Math.floor((1280 - 80) / (w + HGAP));
@@ -686,6 +701,14 @@ function homeDraw() {
     h += "</div>"; top += hs[r];
   }
   $("hRows").innerHTML = h;
+  if (hsame && st !== h0) { var dyy = 0; for (r = Math.min(st, h0); r < Math.max(st, h0); r++) dyy += hs[r] || 0; slide($("hRows"), 0, st > h0 ? dyy : -dyy); }
+  else if (hsame) {   /* ◀▶: satırın kendisi yana kaysın */
+    var hr0 = $("hRows").children, ri = S.hr - st, ow = S.hoff[S.hr] || 0;
+    if (hr0[ri] && ho0[S.hr] !== undefined && ho0[S.hr] !== ow) { var cw = HCW[rows[S.hr].sz][0] + HGAP, cc = hr0[ri].children, q, sx = (ow - ho0[S.hr]) * cw;
+      for (q = 0; q < cc.length; q++) if (cc[q].className !== "ht") { var cs2 = cc[q].style; cs2.webkitTransition = cs2.transition = "none"; cs2.webkitTransform = cs2.transform = "translateX(" + sx + "px)"; }
+      void hr0[ri].offsetHeight;
+      for (q = 0; q < cc.length; q++) if (cc[q].className !== "ht") { var cs3 = cc[q].style; cs3.webkitTransition = cs3.transition = "-webkit-transform .2s ease-out, transform .2s ease-out"; cs3.webkitTransform = cs3.transform = "translateX(0)"; } }
+  }
 }
 function homeOpen() {
   var it = hCur(); if (!it) return; var row = S.hrows[S.hr];
@@ -2324,8 +2347,11 @@ document.addEventListener("touchstart", function (e) {
   var t = e.target, box = null, pe = pressEl(t);
   if (pe) { pe.className += " press"; setTimeout(function () { pe.className = pe.className.replace(/ press/g, ""); }, 220); }
   if (S.playing && !S.mini) { dg = null; return; }
-  while (t && t !== document.body) { if (t.id === "cats" || t.id === "items") { box = t.id; break; } t = t.parentNode; }
-  dg = box ? { box: box, y: e.touches[0].clientY, x: e.touches[0].clientX, moved: false, acc: 0, el: e.target } : null;
+  var hrow = -1;
+  while (t && t !== document.body) { if (t.className === "hr" && t.parentNode && t.parentNode.id === "hRows") { var sib = t, ix = 0; while ((sib = sib.previousSibling)) ix++; hrow = (S.hrS || 0) + ix; }
+    if (t.id === "cats" || t.id === "items" || t.id === "hRows") { box = t.id; break; } t = t.parentNode; }
+  if (box === "hRows" && (kind() !== "home" || !S.hrows || !S.hrows.length)) box = null;
+  dg = box ? { box: box, y: e.touches[0].clientY, x: e.touches[0].clientX, moved: false, acc: 0, el: e.target, row: hrow, ax: 0, sx: e.touches[0].clientX } : null;
   /* liste yeniden çizilince dokunulan öğe sayfadan çıkar; olaylar ona gelmeye devam eder, o yüzden dinleyici öğenin kendisinde */
   if (dg) { e.target.addEventListener("touchmove", dgMove, { passive: false }); e.target.addEventListener("touchend", dgEnd, false); e.target.addEventListener("touchcancel", dgEnd, false); }
 }, { passive: true });
@@ -2333,6 +2359,7 @@ function dgEnd() { var el = dg && dg.el; if (el) { el.removeEventListener("touch
   if (dg && dg.moved) swipeAt = new Date().getTime(); dg = null; }
 function dgMove(e) {
   if (!dg || !e.touches || e.touches.length !== 1) return;
+  if (dg.box === "hRows") { homeDrag(e); return; }
   var y = e.touches[0].clientY, dy = (dg.y - y) / bodyK(); dg.y = y;
   if (!dg.moved && Math.abs(e.touches[0].clientX - dg.x) > 30 && Math.abs(dy) < 4) return;
   dg.acc += dy; if (Math.abs(dg.acc) > 8) dg.moved = true;
@@ -2343,6 +2370,24 @@ function dgMove(e) {
   if (dg.box === "cats") { S.cS = (S.cS || 0) + n; S.cSM = true; drawCats(); }
   else if (grid) { S.gS = (S.gS || 0) + n; S.gSM = true; drawGrid(); }
   else if (!vgMode()) { S.iS = (S.iS || 0) + n; S.iSM = true; drawItems(); }
+}
+
+/* 🏠 ana sayfa: yukarı/aşağı sürükle = satırlar arasında gez, sağa/sola sürükle = satırın içinde gez */
+function homeDrag(e) {
+  var k = bodyK(), x = e.touches[0].clientX, y = e.touches[0].clientY, dx = (dg.sx - x) / k, dy = (dg.y - y) / k, rows = S.hrows;
+  if (!dg.dir) { if (Math.abs(x - dg.x) < 10 && Math.abs(dy) < 10) return; dg.dir = Math.abs(x - dg.x) > Math.abs(dy) ? "x" : "y"; dg.moved = true; }
+  if (e.cancelable) e.preventDefault();
+  if (dg.dir === "y") {
+    var n = 0; while (dy >= 110) { dy -= 110; n++; dg.y -= 110 * k; } while (dy <= -110) { dy += 110; n--; dg.y += 110 * k; }
+    if (!n) return; var nr = Math.max(0, Math.min(rows.length - 1, S.hr + n)); if (nr === S.hr) return;
+    S.hr = nr; S.hrS = nr; homeDraw(); return;
+  }
+  var r = dg.row; if (r < 0 || !rows[r]) return;
+  var cw = HCW[rows[r].sz][0] + HGAP, m = 0; while (dx >= cw) { dx -= cw; m++; dg.sx -= cw * k; } while (dx <= -cw) { dx += cw; m--; dg.sx += cw * k; }
+  if (!m) return;
+  var per = Math.floor((1280 - 80) / cw), len = rows[r].items.length, off = Math.max(0, Math.min(Math.max(0, len - per), (S.hoff[r] || 0) + m));
+  if (off === (S.hoff[r] || 0)) return;
+  S.hoff[r] = off; S.hc[r] = Math.max(off, Math.min(off + per - 1, S.hc[r] || 0)); S.hr = r; homeDraw();
 }
 
 /* PC'den açılış parametresi (ares-launch -p '{"tab":"family","cat":2}'): ekran görüntüsü / test için istenen sekmeyle açılır */
