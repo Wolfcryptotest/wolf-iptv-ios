@@ -597,6 +597,44 @@
   window.WOLF_PROBE = probe;
 
   /* ---------- /api/... yönlendirici ---------- */
+  /* ---------- 📅 diziler günlerine göre / 🗓 film ve diziler yıllarına göre (TV ve telefon aynı kod) ----------
+     Sağlayıcı haftalık dizileri "Pazartesi Dizileri" … "Pazar Dizileri" adlı film kategorilerine koyuyor (son bölüm dosyaları).
+     Diziler sekmesinde bunlar günlere ayrılır; her biri Diziler kataloğundaki aynı adlı diziyle eşleşirse tüm bölümleriyle açılır,
+     eşleşmezse son bölüm dosyası doğrudan oynar. Yıllar: film adındaki (2024) ya da dizinin çıkış tarihi. */
+  var DAYS = [["Pazartesi", /^pazartesi/], ["Salı", /^sali/], ["Çarşamba", /^carsamba/], ["Perşembe", /^persembe/], ["Cuma", /^cuma\s/], ["Cumartesi", /^cumartesi/], ["Pazar", /^pazar\s/]];
+  function todayIx() { return (new Date().getDay() + 6) % 7; }
+  function dayCats() {
+    var t = todayIx(), out = [{ category_id: "__hdD", category_name: "━ 📅 Günlere göre (TV dizileri)" }, { category_id: "__day" + t, category_name: "📍 Bugün — " + DAYS[t][0] }], i;
+    for (i = 0; i < 7; i++) if (i !== t) out.push({ category_id: "__day" + i, category_name: "📅 " + DAYS[i][0] });
+    return out;
+  }
+  function yearCats(kind) { var out = [{ category_id: "__hdY", category_name: kind === "vod" ? "━ 🗓 Tüm filmler yıllara göre" : "━ 🗓 Yıllara göre" }], i; for (i = 0; i < FYRS.length; i++) out.push({ category_id: FYRS[i][0], category_name: FYRS[i][1].replace("📅", "🗓") }); return out; }
+  function insAfterFirst(oc, add) { var at = oc.length, seen = 0, j; for (j = 0; j < oc.length; j++) if (String(oc[j].category_id).indexOf("__hd") === 0 && ++seen === 2) { at = j; break; } return oc.slice(0, at).concat(add, oc.slice(at)); }
+  function serKey(n) { return fold(n).replace(/\(?\b(19|20)\d\d\b\)?/g, " ").replace(/\bfinal\b|\bsezon\b|\bbolum\b|\bhd\b/g, " ").replace(/[^a-z0-9]/g, ""); }
+  function dayItems(ix, cb) {
+    catList("vod", function (cl) {
+      var c = null, i; for (i = 0; i < cl.list.length; i++) if (DAYS[ix][1].test(fold(cl.list[i].n)) && /dizi/.test(fold(cl.list[i].n))) { c = cl.list[i]; break; }
+      if (!c) return cb([]);
+      papi({ action: "get_vod_streams", category_id: c.id }, function (eps) {
+        eps = Object.prototype.toString.call(eps) === "[object Array]" ? eps : [];
+        (locked() ? fullF : full)("series", function (sl) {
+          var by = {}, out = [], seen = {}, j, k, x;
+          for (j = 0; j < sl.length; j++) { k = serKey(sl[j].name); if (k && !by[k]) by[k] = sl[j]; }
+          for (j = 0; j < eps.length; j++) { if (isSep(eps[j].name)) continue; k = serKey(eps[j].name); x = by[k];
+            if (!x && k.length >= 5) for (var key in by) if (by.hasOwnProperty(key) && key.length >= 5 && (key.indexOf(k) === 0 || k.indexOf(key) === 0)) { x = by[key]; break; }
+            if (x) { if (seen[x.series_id]) continue; seen[x.series_id] = 1; x = slim(x); x._k = "series"; out.push(x); }
+            else { x = slim(eps[j]); x._k = "vod"; out.push(x); } }
+          cb(out);
+        });
+      }, function () { cb([]); });
+    });
+  }
+  function yearItems(kind, cat, cb) {
+    (locked() ? fullF : full)(kind, function (l) { catList(kind, function (cl) {
+      l = l.filter(function (it) { var ci = cl.by[String(it.category_id)]; return !isSep(it.name) && !(ci && (ci.adult || ci.nofilm || ci.sep)); });
+      cb(grpFilter(kind, cat, l, cl).map(function (it) { var o = slim(it); o._k = kind; return o; }));
+    }); });
+  }
   function qs(url) { var o = {}, q = url.split("?")[1] || ""; q.split("&").forEach(function (p) { if (!p) return; var kv = p.split("="); o[decodeURIComponent(kv[0])] = decodeURIComponent((kv[1] || "").replace(/\+/g, " ")); }); return o; }
   function handleGet(path, q, ok, fail) {
     var a = path.replace(/^\/api\//, "");
@@ -625,6 +663,8 @@
         for (i = 0; i < cats.length; i++) { if (isSep(cats[i].category_name)) continue; if (set[String(cats[i].category_id)]) { n++; if (locked()) continue; } out.push(cats[i]); }
         if (n && locked()) out.push({ category_id: "__adult", category_name: "🔒 +18 (" + n + " kategori, PIN)" });
         var oc = orgCats(cm[1], out);
+        if (cm[1] === "series") oc = dayCats().concat(insAfterFirst(oc, yearCats("series")));
+        if (cm[1] === "vod") oc = insAfterFirst(oc, yearCats("vod"));
         if (cm[1] === "vod") {   /* Filmler içinde: 👪 Aile Filmleri (oyuncularla çekilmiş, animasyon yok) */
           var at = 0, j; for (j = 1; j < oc.length; j++) if (String(oc[j].category_id).indexOf("__hd") === 0) { at = j; break; }
           oc.splice(at, 0, { category_id: "__hdA", category_name: "━ Aile" }, { category_id: "__fam", category_name: "👪 Aile Filmleri" });
@@ -634,6 +674,8 @@
     }, fail); }
     var sm = /^get_(live|vod)_streams$|^get_series$/.exec(a);
     if (a === "get_vod_streams" && q.category_id === "__fam") return famItems("__g_live", ok);
+    if (a === "get_series" && /^__day[0-6]$/.test(q.category_id || "")) return dayItems(+q.category_id.charAt(5), ok);
+    if ((a === "get_series" || a === "get_vod_streams") && /^__y/.test(q.category_id || "")) return yearItems(a === "get_series" ? "series" : "vod", q.category_id, ok);
     if (sm && !q.category_id && a !== "get_live_streams") {   /* tam liste: bir kez indirilir, önbellekten verilir */
       var fk = a === "get_series" ? "series" : "vod";
       return (locked() ? fullF : full)(fk, function (l) { ok(l.filter(function (it) { return !isSep(it.name); }).map(slim)); });
