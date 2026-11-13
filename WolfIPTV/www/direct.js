@@ -593,24 +593,46 @@
       if (x && typeof x === "object") { if (x[key]) { cb(x[key]); n++; continue; } for (k in x) if (x.hasOwnProperty(k) && x[k] && typeof x[k] === "object") st.push(x[k]); } } }
   function txt(t) { return t ? (t.simpleText || ((t.runs || []).map(function (r) { return r.text || ""; }).join(""))) : ""; }
   function sameName(a, b) { a = fold(a).replace(/[^a-z0-9]/g, ""); b = fold(b).replace(/[^a-z0-9]/g, ""); return a && b && (a === b || (b.length >= 6 && a.indexOf(b) === 0) || (a.length >= 6 && b.indexOf(a) === 0)); }
+  /* ▶ YouTube kanal araması: "savaş kurtbaba", "Rıdvan Kevrek" ya da "@savaskurtbaba" yazınca o kişinin KENDİ kanalı bulunur.
+     Kanal adı VE @kullanıcı adı karşılaştırılır (Türkçe harfler sadeleştirilir: ş→s, ı→i …); bulunamazsa doğrudan
+     youtube.com/@savaskurtbaba adresi denenir. Kanal bulunursa en yeni videoları küçük resimli gelir. */
+  function handleOf(c) {
+    var u = (c.navigationEndpoint && c.navigationEndpoint.browseEndpoint && c.navigationEndpoint.browseEndpoint.canonicalBaseUrl) || "", m = /\/@([^\/?]+)/.exec(u);
+    if (m) return decodeURIComponent(m[1]);
+    var sc = txt(c.subscriberCountText); if (/^@/.test(sc)) return sc.substr(1);
+    return "";
+  }
+  function plain(x) { return fold(x).replace(/[^a-z0-9]/g, ""); }
+  function chVideos(url, ch, cb, fail) {
+    rawText(url, function (h2) {
+      var d2 = ytData(h2), out = [], seen = {}, nm = ch.name;
+      if (!nm) { var mt = /<meta property="og:title" content="([^"]+)"/.exec(h2); nm = mt ? mt[1].replace(/&amp;/g, "&").replace(/&#39;/g, "'") : ch.handle ? "@" + ch.handle : ""; }
+      if (d2) walk(d2, "videoRenderer", function (v) { if (!v.videoId || seen[v.videoId]) return; seen[v.videoId] = 1;
+        out.push({ id: v.videoId, title: txt(v.title), channel: nm, len: txt(v.lengthText) || (function () { var o = v.thumbnailOverlays || [], i; for (i = 0; i < o.length; i++) if (o[i].thumbnailOverlayTimeStatusRenderer) return txt(o[i].thumbnailOverlayTimeStatusRenderer.text); return ""; })(),
+          views: parseInt(txt(v.viewCountText).replace(/[^0-9]/g, ""), 10) || 0, ver: ch.ver, off: true, thumb: "https://i.ytimg.com/vi/" + v.videoId + "/mqdefault.jpg" }); }, 40);
+      if (out.length) cb(out); else fail();
+    }, fail, 15000);
+  }
   function ytChannel(q, cb) {
+    q = String(q || "").replace(/^\s+|\s+$/g, "");
+    var fallback = function () { ytSearch(q.replace(/^@/, ""), function (r) { if (r && r.length) cb(r); else ytSearch(q.replace(/^@/, ""), cb, true); }); };
+    var nq = plain(q);
+    /* "@savaskurtbaba" yazıldıysa doğrudan o kanal */
+    if (/^@/.test(q) && nq) return chVideos("https://www.youtube.com/@" + encodeURIComponent(q.substr(1).replace(/\s+/g, "")) + "/videos?hl=tr&gl=TR", { handle: q.substr(1) }, cb, fallback);
+    /* adı doğrudan @adres olarak dene (ör. "rıdvan kevrek" → @ridvankevrek) */
+    var tryHandle = function () { if (nq.length < 4) return fallback(); chVideos("https://www.youtube.com/@" + nq + "/videos?hl=tr&gl=TR", { handle: nq }, cb, fallback); };
     rawText("https://www.youtube.com/results?hl=tr&gl=TR&sp=EgIQAg%3D%3D&search_query=" + encodeURIComponent(q), function (html) {
-      var d = ytData(html), ch = null;
-      var exact = null, close = null, nq = fold(q).replace(/[^a-z0-9]/g, "");
+      var d = ytData(html), exact = null, close = null, first = null;
       if (d) walk(d, "channelRenderer", function (c) { if (!c.channelId) return;
-        var nm = txt(c.title), o = { id: c.channelId, name: nm, ver: (c.ownerBadges || []).some(function (b) { return /VERIFIED|ARTIST/.test((b.metadataBadgeRenderer && b.metadataBadgeRenderer.style) || ""); }) };
-        if (!exact && fold(nm).replace(/[^a-z0-9]/g, "") === nq) exact = o;
-        else if (!close && o.ver && sameName(nm, q) && !/fan|hayran|klip|edit|ozet|özet/i.test(nm)) close = o; }, 10);
-      ch = exact || close;
-      if (!ch) { ytSearch(q, function (r) { if (r && r.length) cb(r); else ytSearch(q, cb, true); }); return; }
-      rawText("https://www.youtube.com/channel/" + ch.id + "/videos?hl=tr&gl=TR", function (h2) {
-        var d2 = ytData(h2), out = [], seen = {};
-        if (d2) walk(d2, "videoRenderer", function (v) { if (!v.videoId || seen[v.videoId]) return; seen[v.videoId] = 1;
-          out.push({ id: v.videoId, title: txt(v.title), channel: ch.name, len: txt(v.lengthText) || (function () { var o = v.thumbnailOverlays || [], i; for (i = 0; i < o.length; i++) if (o[i].thumbnailOverlayTimeStatusRenderer) return txt(o[i].thumbnailOverlayTimeStatusRenderer.text); return ""; })(), age: txt(v.publishedTimeText),
-            views: parseInt(txt(v.viewCountText).replace(/[^0-9]/g, ""), 10) || 0, ver: ch.ver, off: true, thumb: "https://i.ytimg.com/vi/" + v.videoId + "/mqdefault.jpg" }); }, 40);
-        if (out.length) cb(out); else ytSearch(q, cb);
-      }, function () { ytSearch(q, cb); }, 15000);
-    }, function () { ytSearch(q, cb); }, 15000);
+        var nm = txt(c.title), hd = handleOf(c), pn = plain(nm), ph = plain(hd), bad = /fan|hayran|klip|edit|ozet|özet|kesit|shorts/i.test(nm + " " + hd),
+          o = { id: c.channelId, name: nm, handle: hd, ver: (c.ownerBadges || []).some(function (b) { return /VERIFIED|ARTIST/.test((b.metadataBadgeRenderer && b.metadataBadgeRenderer.style) || ""); }) };
+        if (!first) first = o;
+        if (!exact && !bad && (pn === nq || ph === nq)) exact = o;   /* ad ya da @kullanıcı adı birebir */
+        else if (!close && !bad && (sameName(nm, q) || sameName(hd, q)) && (o.ver || o === first)) close = o; }, 12);
+      var ch = exact || close;
+      if (!ch) return tryHandle();
+      chVideos("https://www.youtube.com/channel/" + ch.id + "/videos?hl=tr&gl=TR", ch, cb, fallback);
+    }, tryHandle, 15000);
   }
 
   /* ---------- web araması (PC'siz): DuckDuckGo, olmazsa Bing — Google'daki gibi sayfa sonuçları ---------- */
