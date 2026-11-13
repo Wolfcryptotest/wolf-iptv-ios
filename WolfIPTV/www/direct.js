@@ -59,18 +59,56 @@
   function idOf(kind, it) { return String(kind === "series" ? it.series_id : it.stream_id); }
   function slim(it) { var o = {}, k; for (k in it) if (it.hasOwnProperty(k) && k !== "info" && k !== "episodes") o[k] = it[k]; return o; }
 
-  /* ---------- tam listeler (sayım ve arama için, bir kez çekilir) ---------- */
+  /* ---------- ⚡ kalıcı önbellek (IndexedDB): uygulama her açılışta binlerce film/diziyi baştan indirmesin ----------
+     Listeler telefonda saklanır, açılışta anında gelir; 6 saatten eskiyse arkada sessizce tazelenir. */
+  var CK = SRV + "|" + C.user + "|", IDB = null, IDBW = [];
+  function idbFlush() { var w = IDBW; IDBW = []; for (var i = 0; i < w.length; i++) w[i](); }
+  try {
+    var idq = window.indexedDB.open("wolf_cache", 1);
+    idq.onupgradeneeded = function () { try { idq.result.createObjectStore("kv"); } catch (e) {} };
+    idq.onsuccess = function () { if (IDB === null) { IDB = idq.result; idbFlush(); } };
+    idq.onerror = idq.onblocked = function () { if (IDB === null) { IDB = false; idbFlush(); } };
+    setTimeout(function () { if (IDB === null) { IDB = false; idbFlush(); } }, 1500);
+  } catch (e) { IDB = false; }
+  function idbReady(cb) { if (IDB !== null) cb(); else IDBW.push(cb); }
+  function cget(k, cb) { idbReady(function () { if (!IDB) return cb(null);
+    try { var r = IDB.transaction("kv", "readonly").objectStore("kv").get(k); r.onsuccess = function () { cb(r.result || null); }; r.onerror = function () { cb(null); }; } catch (e) { cb(null); } }); }
+  function cput(k, v) { idbReady(function () { if (!IDB) return; try { IDB.transaction("kv", "readwrite").objectStore("kv").put(v, k); } catch (e) {} }); }
+  window.WOLF_CACHE_CLEAR = function () { MEMC = {}; idbReady(function () { if (IDB) try { IDB.transaction("kv", "readwrite").objectStore("kv").clear(); } catch (e) {} }); };
+  function isArr(d) { return Object.prototype.toString.call(d) === "[object Array]"; }
+  /* kategori ve kategori içeriği istekleri: önce bellek / telefon, gerekirse sağlayıcı (eskiyse arkada tazelenir) */
+  var MEMC = {};
+  function cpapi(params, ok, fail) {
+    var key = CK + JSON.stringify(params);
+    if (MEMC[key]) return ok(MEMC[key]);
+    cget(key, function (c) {
+      var net = function (bg) { papi(params, function (d) { if (isArr(d) && d.length) { MEMC[key] = d; cput(key, { t: Date.now(), d: d }); } if (!bg) ok(d); },
+        function (e) { if (bg) return; if (fail) fail(e); else ok([]); }); };
+      if (c && c.d) { MEMC[key] = c.d; ok(c.d); if (Date.now() - (c.t || 0) > 30 * 60000) setTimeout(function () { net(true); }, 4000); return; }
+      net(false);
+    });
+  }
+  /* ---------- tam listeler (sayım ve arama için) ---------- */
   var FULL = {}, WAIT = {}, ACT = { live: "get_live_streams", vod: "get_vod_streams", series: "get_series" };
   function full(kind, cb) {
     if (FULL[kind]) { cb(FULL[kind]); return; }
     if (WAIT[kind]) { WAIT[kind].push(cb); return; }
     WAIT[kind] = [cb];
-    papi({ action: ACT[kind] }, function (l) {
-      FULL[kind] = Object.prototype.toString.call(l) === "[object Array]" ? l : [];
-      for (var i = 0; i < FULL[kind].length; i++) FULL[kind][i]._f = fold(FULL[kind][i].name);
-      var w = WAIT[kind]; WAIT[kind] = null; for (var j = 0; j < w.length; j++) w[j](FULL[kind]);
-    }, function () { var w = WAIT[kind]; WAIT[kind] = null; for (var j = 0; j < w.length; j++) w[j]([]); });
+    var fin = function (l) { if (l) FULL[kind] = l; var w = WAIT[kind]; WAIT[kind] = null; for (var j = 0; j < w.length; j++) w[j](l || []); };
+    cget(CK + "full_" + kind, function (c) {
+      if (c && c.l && c.l.length) { fin(c.l); if (Date.now() - (c.t || 0) > 6 * 3600000) setTimeout(function () { fetchFull(kind, true); }, 20000); return; }
+      fetchFull(kind, false, fin);
+    });
   }
+  function fetchFull(kind, bg, fin) {
+    papi({ action: ACT[kind] }, function (l) {
+      l = isArr(l) ? l : [];
+      if (!l.length) { if (!bg) fin(null); return; }
+      if (bg) { FULL[kind] = l; POOL = {}; } else fin(l);
+      cput(CK + "full_" + kind, { t: Date.now(), l: l });
+    }, function () { if (!bg) fin(null); });
+  }
+  function F(it) { return it._f || (it._f = fold(it.name)); }   /* arama için sade ad: gerektiğinde hesaplanır */
   /* ---------- +18 ebeveyn kilidi: yetişkin kategoriler / kanallar PIN girilene kadar hiç görünmez ---------- */
   var ADULT = /\+ ?18|18 ?\+|xxx|adult|yeti[sş]kin|porn|erotı?i?k|erotic|playboy|hustler|dorcel|brazzers|penthouse|redlight|for adults/i;
   var ACATS = {}, CACT = { live: "get_live_categories", vod: "get_vod_categories", series: "get_series_categories" };
@@ -79,7 +117,7 @@
     if (ACATS[kind] && !list) { cb(ACATS[kind]); return; }
     var mk = function (cats) { var s = {}, i; for (i = 0; cats && i < cats.length; i++) if (ADULT.test(cats[i].category_name || "")) s[String(cats[i].category_id)] = 1; ACATS[kind] = s; cb(s); };
     if (list) { mk(list); return; }
-    papi({ action: CACT[kind] }, mk, function () { mk([]); });
+    cpapi({ action: CACT[kind] }, mk, function () { mk([]); });
   }
   function isAdult(kind, it) { return ADULT.test(it.name || "") || !!(ACATS[kind] && ACATS[kind][String(it.category_id)]); }
   function noAdult(kind, l, cb) { if (!locked()) { cb(l); return; } adultCats(kind, function () { cb(l.filter(function (it) { return !isAdult(kind, it); })); }); }
@@ -203,7 +241,7 @@
     ["__g_cart", "🎨 Çizgi Film", /cartoon|cizgi|animasyon|animation|nickelodeon|nick\b|boomerang|disney|smart|toon|anime|zarok|spacetoon/],
     ["__g_yerli", "⭐ Yerli & Eğitici", /trt|minika|diyanet|eba\b|yumurcak|cocuk|dusyeri|kidz|tv ?8 ?bucuk/],
     ["__g_doc", "🌍 Belgesel & Bilim", /belgesel|documentary|nat ?geo|national geographic|discovery|animal|bbc earth|da ?vinci|science|bilim|history|tarih|nature|doga/]];
-  function gtext(kind, it, ci) { var m = mg(kind, it); return (m && m[1] ? m[1] + " " : (ci ? fold(ci.n) + " " : "")) + it._f; }
+  function gtext(kind, it, ci) { var m = mg(kind, it); return (m && m[1] ? m[1] + " " : (ci ? fold(ci.n) + " " : "")) + F(it); }
   function isAnim(kind, it, ci) { var m = mg(kind, it); return /animasyon|animation|anime\b|cizgi|cartoon/.test((m && m[1]) || "") || (ci && /animasyon|cizgi|cartoon|anime/.test(fold(ci.n))); }
   /* ---------- kategori bilgisi ---------- */
   var CATL = {}, CATW = {};
@@ -212,7 +250,7 @@
     if (CATW[kind]) { CATW[kind].push(cb); return; }   /* aynı anda gelen istekler tek indirmeyi bekler */
     CATW[kind] = [cb];
     var done = function (o) { var w = CATW[kind]; CATW[kind] = null; for (var i = 0; i < w.length; i++) w[i](o); };
-    papi({ action: CACT[kind] }, function (cats) {
+    cpapi({ action: CACT[kind] }, function (cats) {
       cats = Object.prototype.toString.call(cats) === "[object Array]" ? cats : [];
       var o = { list: [], by: {} }, i, c, f;
       for (i = 0; i < cats.length; i++) { c = cats[i]; f = fold(c.category_name);
@@ -253,7 +291,7 @@
   function suits(kind, it, ci, max) {
     var m = mg(kind, it), g = (m && m[1]) || "";
     if (m && m[0] >= 0) return m[0] <= max && !/korku|horror|erotik/.test(g) ? 1 : 0;   /* gerçek yaş sınırı (TMDB anahtarıyla) */
-    if (RTITLE.test(it._f)) return 0;
+    if (RTITLE.test(F(it))) return 0;
     if (g) {
       if (DARK.test(g)) return 0;
       if (SAFEG.test(g)) return kind === "series" && /animasyon|animation/.test(g) && !/aile|cocuk|kids|family/.test(g) && /dram|aksiyon/.test(g) ? 0 : 1;
@@ -276,13 +314,13 @@
         if (C.block[key]) continue;
         if (C.trOnly && (ci.foreign || foreign(it.name))) continue;
         if (ci.nofilm) continue;
-        ok = true; for (j = 0; j < bw.length; j++) if (it._f.indexOf(bw[j]) >= 0) { ok = false; break; } if (!ok) continue;
+        ok = true; for (j = 0; j < bw.length; j++) if (F(it).indexOf(bw[j]) >= 0) { ok = false; break; } if (!ok) continue;
         if (kind === "live") { if (ci.kid) out.push(it); continue; }
         s = suits(kind, it, ci, max);
         if (s < 0) { if (ci.kid && C.unknown !== "hide") s = 1; if (kind === "vod" && !META[mkey(kind, it)]) cand.push([ci.kid ? 1 : 0, it]); }
         if (s !== 1) continue;
         if (C.tmdb && kind === "vod" && !(META[mkey(kind, it)] && META[mkey(kind, it)][0] >= 0)) cand.push([ci.kid ? 2 : 1, it]);   /* TMDB anahtarı varsa gerçek yaş sınırı da doğrulanır */
-        dk = it._f.replace(/^4k[\s\-]*/, "").replace(/[^a-z0-9]/g, "");   /* aynı film birden çok kategoride: tek göster */
+        dk = F(it).replace(/^4k[\s\-]*/, "").replace(/[^a-z0-9]/g, "");   /* aynı film birden çok kategoride: tek göster */
         if (seen[dk]) continue; seen[dk] = 1; out.push(it);
       }
       if (kind !== "live") { cand.sort(function (a, b) { return a[0] - b[0] || (+b[1].added || 0) - (+a[1].added || 0); });
@@ -303,7 +341,7 @@
   function rateOf(kind, it) { var m = mg(kind, it); return +it.rating || (m && m[3]) || (+it.rating_5based || 0) * 2 || 0; }
   function inGrp(kind, it, gid, ci) {
     var i;
-    if (kind === "live") { for (i = 0; i < LGRP.length; i++) if (LGRP[i][2].test(it._f)) return LGRP[i][0] === gid; return gid === "__g_other"; }
+    if (kind === "live") { for (i = 0; i < LGRP.length; i++) if (LGRP[i][2].test(F(it))) return LGRP[i][0] === gid; return gid === "__g_other"; }
     if (gid === "__g_live") return !isAnim(kind, it, ci) && !/belgesel|documentary/.test(gtext(kind, it, ci));
     if (gid === "__g_yerli") return !!(ci && ci.yerli) && !isAnim(kind, it, ci);
     var G = kind === "series" ? SGEN : GEN;
@@ -404,7 +442,7 @@
   }
   /* söylendiği gibi yazım: jurasik = jurassic, kartun = cartoon, spaydırmen ≈ spiderman */
   function phon(w) { return w.replace(/ph/g, "f").replace(/ck|q|c/g, "k").replace(/w/g, "v").replace(/x/g, "ks").replace(/y/g, "i").replace(/(.)\1+/g, "$1"); }
-  function prep(it) { if (!it._w) { it._f = it._f || fold(it.name); it._w = it._f.split(/[^a-z0-9]+/).filter(function (w) { return w; }); it._n = it._w.join(""); it._p = it._w.map(phon); } }
+  function prep(it) { if (!it._w) { it._f = F(it); it._w = it._f.split(/[^a-z0-9]+/).filter(function (w) { return w; }); it._n = it._w.join(""); it._p = it._w.map(phon); } }
   function tokScore(t, it, fz) {
     var w = it._w, i, best = 9, al = t.length <= 3 ? 0 : (t.length <= 7 ? 1 : 2);
     for (i = 0; i < w.length; i++) { if (w[i] === t) return 0; if (w[i].indexOf(t) === 0) best = Math.min(best, 1); }
@@ -624,7 +662,7 @@
     catList("vod", function (cl) {
       var c = null, i; for (i = 0; i < cl.list.length; i++) if (DAYS[ix][1].test(fold(cl.list[i].n)) && /dizi/.test(fold(cl.list[i].n))) { c = cl.list[i]; break; }
       if (!c) return cb([]);
-      papi({ action: "get_vod_streams", category_id: c.id }, function (eps) {
+      cpapi({ action: "get_vod_streams", category_id: c.id }, function (eps) {
         eps = Object.prototype.toString.call(eps) === "[object Array]" ? eps : [];
         (locked() ? fullF : full)("series", function (sl) {
           var by = {}, out = [], seen = {}, j, k, x;
@@ -665,7 +703,7 @@
       if (/^(yt|dm|ytch|web)$/.test(a)) return ok([]);
     }
     var cm = /^get_(live|vod|series)_categories$/.exec(a);
-    if (cm) { q.action = a; return papi(q, function (cats) {   /* +18 kategoriler: kilitliyken gizli, sonda "🔒 +18" satırı */
+    if (cm) { q.action = a; return cpapi(q, function (cats) {   /* +18 kategoriler: kilitliyken gizli, sonda "🔒 +18" satırı */
       cats = Object.prototype.toString.call(cats) === "[object Array]" ? cats : [];
       adultCats(cm[1], function (set) {
         var out = [], i, n = 0;
@@ -692,14 +730,14 @@
     if (sm && locked()) { var kd = a === "get_series" ? "series" : (a === "get_live_streams" ? "live" : "vod");
       return adultCats(kd, function (set) {
         if (q.category_id && set[String(q.category_id)]) return ok([]);
-        q.action = a; papi(q, function (d) {
+        q.action = a; (q.category_id ? cpapi : papi)(q, function (d) {
           d = Object.prototype.toString.call(d) === "[object Array]" ? d.filter(function (it) { return !isAdult(kd, it) && !isSep(it.name); }) : d;
           if (a === "get_live_streams" && Object.prototype.toString.call(d) === "[object Array]") for (var i = 0; i < d.length; i++) if (!d[i].num) d[i].num = i + 1;
           ok(d);
         }, fail);
       }); }
     if (/^get_(live|vod|series)_categories$|^get_(live|vod)_streams$|^get_series$|^get_series_info$|^get_vod_info$|^get_short_epg$|^get_simple_data_table$/.test(a)) {
-      q.action = a; return papi(q, function (d) {
+      q.action = a; return (sm && q.category_id ? cpapi : papi)(q, function (d) {
         if (a === "get_live_streams" && Object.prototype.toString.call(d) === "[object Array]")
           for (var i = 0; i < d.length; i++) if (!d[i].num) d[i].num = i + 1;
         ok(d);

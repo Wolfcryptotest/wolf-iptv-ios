@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=1280, viewport-fit=cover">
+<meta name="viewport" content="width=1280, user-scalable=no, viewport-fit=cover">
 <title>Wolf IPTV TV</title>
 <style>
 html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0d0e12; }
@@ -257,6 +257,20 @@ body.touch #pBack, body.touch #pPlay { display: none !important; }
 body.touch, body.touch * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: rgba(0,0,0,0); }
 body.touch input, body.touch textarea { -webkit-user-select: text; user-select: text; }
 body.touch *:focus { outline: none; }
+/* 📱 dokunmatik: anında tepki (çift dokunma beklemesi yok) + basınca hemen renk değişsin */
+html, body { touch-action: manipulation; }
+body.touch .press { filter: brightness(1.45); }
+body.touch .tile.press, body.touch .hc.press, body.touch .vc.press { transform: scale(0.96); }
+/* 📱 büyük, kolay basılan sekmeler ve kategoriler (örnek uygulamadaki gibi) */
+body.touch #tabs { left: 176px; top: 6px; height: 52px; width: 860px; }
+body.touch .tab { height: 52px; line-height: 52px; font-size: 21px; width: 128px; border-radius: 12px; }
+body.touch .tab.on { background: #4a0d12; color: #fff; box-shadow: inset 0 -4px 0 #e4002b; }
+body.touch #cats .row { height: 56px; line-height: 56px; font-size: 23px; font-weight: bold; margin: 0 6px 4px; padding: 0 14px; border-radius: 10px; background: #1b1d25; }
+body.touch #cats .row.hd { background: transparent; height: 40px; line-height: 48px; font-size: 17px; }
+body.touch #cats .row.sel, body.touch #cats .row.foc { background: #4a0d12; color: #fff; }
+body.touch #cats .row .cnt { color: #ff2d2d; font-size: 23px; }
+body.touch #items .row { height: 52px; line-height: 52px; font-size: 23px; }
+body.touch #items .row.foc { background: #4a0d12; }
 body.touch #hHeroTxt .hint { display: none; }
 </style>
 </head>
@@ -275,7 +289,8 @@ body.touch #hHeroTxt .hint { display: none; }
 <script>
 /* Wolf IPTV - eski akıllı TV tarayıcıları için hafif ekran (ES5, kütüphanesiz) */
 var ROWS = 14, CROWS = 17;
-var PAGE_VER = "20261112-06";
+if (("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) { ROWS = 11; CROWS = 10; }   /* telefonda büyük satırlar */
+var PAGE_VER = "20261114-01";
 var DEROWS = 8;   /* sayfa güncellenince TV kendiliğinden yeniler */
 var TABS = [["home", "Ana sayfa"], ["live", "Canlı TV"], ["vod", "Filmler"], ["series", "Diziler"], ["search", "🔍 Ara"], ["web", "🌐 Web"]];
 /* aile filmleri: Filmler sekmesinin içinde "👪 Aile Filmleri" kategorisi (ayrı sekme yok) */
@@ -381,14 +396,16 @@ api("info", null, function (d) {
 });
 
 /* ---------- çizim ---------- */
+var TICO = { home: "🏠", live: "📺", vod: "🎬", series: "🎞" };   /* telefonda sekme simgeleri */
 function drawTabs() {
   var h = "", i;
   for (i = 0; i < TABS.length; i++)
     h += '<div data-t="' + i + '" class="tab' + (i === S.tab ? " on" : "") + (S.col === 0 && i === S.tab ? " foc" : "") +
-      '" style="left:' + (i * 112) + 'px;' + (S.col === 0 && i === S.tab ? "background:#2f5bd3;color:#fff" : "") + '">' + TABS[i][1] + "</div>";
+      '" style="left:' + (i * (TOUCH ? 134 : 112)) + 'px;' + (S.col === 0 && i === S.tab ? "background:#2f5bd3;color:#fff" : "") + '">' + (TOUCH && TICO[TABS[i][0]] && !/^\W/.test(TABS[i][1]) ? TICO[TABS[i][0]] + " " + (TABS[i][0] === "home" ? "Ana" : TABS[i][1]) : TABS[i][1]) + "</div>";
   $("tabs").innerHTML = h;
 }
-function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (sel < st) st = sel; else if (sel >= st + R) st = sel - R + 1;
+function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (S[key + "M"]) { if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }   /* parmakla kaydırıldı */
+  if (sel < st) st = sel; else if (sel >= st + R) st = sel - R + 1;
   if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }
 function drawCats() {
   var n = S.cats.length, st = winStart("cS", S.cat, n, CROWS), h = "", i, c;
@@ -468,7 +485,8 @@ function posOf(it) { var k = vk(), key = k === "series" ? (it._ep_id ? "ep:" + i
 function drawGrid() {
   var list = S.items, n = list.length, row = Math.floor(S.item / COLS), st, h = "", i, it, k = vk(), x, y, img, fav, p, cls;
   st = S.gS || 0;
-  if (row < st) st = row; else if (row >= st + GROWS) st = row - GROWS + 1;
+  if (S.gSM) { var gmax = Math.max(0, Math.ceil(n / COLS) - GROWS); if (st > gmax) st = gmax; }
+  else if (row < st) st = row; else if (row >= st + GROWS) st = row - GROWS + 1;
   if (st < 0) st = 0; S.gS = st;
   for (i = st * COLS; i < Math.min(n, (st + GROWS) * COLS); i++) {
     it = list[i]; x = (i % COLS) * (TW + GX) + 4; y = (Math.floor(i / COLS) - st) * (TH + GY) + 6;
@@ -1156,7 +1174,7 @@ function loadTab(t) {
   if (S.det) { S.det = null; $("det").style.display = "none"; }
   if ($("qbox").style.display === "block") { S.newCatQ = null; closeQ(); }
   if (S.pick) { S.pick = null; $("pick").style.display = "none"; }
-  S.tab = t; S.mode = "list"; S.cats = []; S.items = []; S.cat = 0; S.item = 0; S.loadingMsg = "Yükleniyor…";
+  S.tab = t; S.mode = "list"; S.cats = []; S.items = []; S.cat = 0; S.item = 0; S.loadingMsg = "Yükleniyor…"; S.cS = 0; S.cSM = S.iSM = S.gSM = false;
   var k = kind(), my = ++S.req;
   if (k === "search") { HIST = []; S.lastQ = ""; $("sq").value = ""; searchTab(); return; }
   if (k === "web") { webTab(); S.loadingMsg = ""; webLoad(S.cats[S.cat]); return; }
@@ -1186,7 +1204,7 @@ function loadCat() {
   if (k === "search") { if (c.category_id === "__q") openQ(); else if (c.q) { $("sq").value = c.q; S.lastQ = c.q; runSearch(c.q); } return; }
   my = ++S.req;
   S.loadedCat = S.cat;
-  S.mode = "list"; S.items = []; S.item = 0; S.gS = 0; S.iS = 0; S.loadingMsg = "Yükleniyor…"; drawAll();
+  S.mode = "list"; S.items = []; S.item = 0; S.gS = 0; S.iS = 0; S.iSM = S.gSM = false; S.loadingMsg = "Yükleniyor…"; drawAll();
   var done = function (l) { if (my !== S.req) return; S.items = l || []; S.loadingMsg = "";
     if (S.pendItem != null) { S.item = Math.max(0, Math.min(S.pendItem, S.items.length - 1)); S.pendItem = null; }
     if (c.category_id === "__fav" || c.category_id === "__recent" || c.category_id === "__cont") S.hintAt = S.hintAt || 0;
@@ -1897,6 +1915,7 @@ function kidsSettings() {
       { t: "Çıkışta ebeveyn PIN'i iste", v: pinOn ? "Açık 🔒" : "Kapalı", ch: function () { try { localStorage.setItem("wolf_kidspin", pinOn ? "0" : "1"); } catch (e) {} } },
       { t: "Ebeveyn PIN'ini değiştir", v: "OK", a: function () { panelClose(); openQ("kpinnew"); } },
       { t: "TMDB API anahtarı (yaş bilgisi için, isteğe bağlı)", v: c.tmdb ? "girildi ✓" : "yok — OK ile gir", a: function () { openQ("ktmdb"); $("q").value = c.tmdb || ""; } },
+      { t: "🔄 Kanal / film / dizi listelerini yenile", v: "OK", a: function () { if (window.WOLF_CACHE_CLEAR) window.WOLF_CACHE_CLEAR(); toast("Listeler sağlayıcıdan yeniden alınıyor…", 1500); setTimeout(function () { location.reload(); }, 900); } },
       { t: "Yaş bilgisi önbelleğini sıfırla", v: "OK", a: function () { if (window.WOLF_META_CLEAR) window.WOLF_META_CLEAR(); toast("Önbellek temizlendi — bilgiler yeniden toplanacak"); } },
       { t: "👶 Çocuk moduna geç", a: function () { panelClose(); kidsGo(); } },
       { t: "Kapat", a: panelClose }];
@@ -1905,6 +1924,7 @@ function kidsSettings() {
 /* ---------- kumanda ---------- */
 function listLen() { return S.mode === "eps" ? S.eps.length : S.items.length; }
 function moveIn(d) {
+  S.cSM = S.iSM = S.gSM = false;
   if (S.col === 0) { S.tab = (S.tab + d + TABS.length) % TABS.length; drawTabs(); return; }
   if (S.col === 1) { S.cat = Math.max(0, Math.min(S.cats.length - 1, S.cat + d)); skipHd(d > 0 ? 1 : -1); drawCats(); drawKeys(); return; }
   var n = listLen(); if (!n) return;
@@ -2131,6 +2151,7 @@ function showBtns() {
 document.addEventListener("keydown", function () { if (S.pshow) { clearTimeout(pshowT); S.pshow = false; setCls(); } }, true);
 var hoverOK = true, lastMX = -1, lastMY = -1;
 document.addEventListener("mousemove", function (e) {
+  if (touchy()) return;
   var x = e.clientX, y = e.clientY;
   if (lastMX < 0 || Math.abs(x - lastMX) + Math.abs(y - lastMY) > 12) { hoverOK = true; lastMX = x; lastMY = y; }
   else return;   /* liste altında kayınca oluşan sahte hareket: yok say */
@@ -2149,8 +2170,11 @@ function hit(e) {
   }
   return null;
 }
+var lastTouch = 0;
+document.addEventListener("touchstart", function () { lastTouch = new Date().getTime(); }, { passive: true, capture: true });
+function touchy() { return new Date().getTime() - lastTouch < 1200; }   /* dokunuştan gelen sahte fare olayı */
 document.addEventListener("mouseover", function (e) {
-  if (!hoverOK || S.epg) return;   /* tekerlek / ok tuşuyla gezinirken imleç seçimi değiştirmesin */
+  if (!hoverOK || S.epg || touchy()) return;   /* tekerlek / ok tuşuyla gezinirken imleç seçimi değiştirmesin */
   if (S.det && !S.playing) {   /* detay sayfası: imleç üzerine gelince seçili olsun */
     var el = e.target || e.srcElement, a, D = S.det;
     while (el && el !== document.body && el.getAttribute) {
@@ -2289,6 +2313,37 @@ document.addEventListener("touchend", function (e) {
 document.addEventListener("click", function (e) {
   if (new Date().getTime() - swipeAt < 600) { e.stopImmediatePropagation(); if (e.preventDefault) e.preventDefault(); }
 }, true);
+
+/* ---------- 📱 parmakla kaydırma: kategoriler, kanal listesi, afiş ızgarası ----------
+   Liste yukarı/aşağı sürüklenince satır satır kayar; kısa dokunuş normal tıklamadır. */
+var dg = null;
+function bodyK() { var m = /scale\(([0-9.]+)\)/.exec(document.body.style.transform || ""); return m ? +m[1] : 1; }
+function pressEl(t) { while (t && t !== document.body && t.getAttribute) { if (t.getAttribute("data-i") !== null || t.getAttribute("data-t") !== null || t.getAttribute("data-h") !== null || t.getAttribute("data-b") !== null || t.getAttribute("data-tb") !== null) return t; t = t.parentNode; } return null; }
+document.addEventListener("touchstart", function (e) {
+  if (!e.touches || e.touches.length !== 1) { dg = null; return; }
+  var t = e.target, box = null, pe = pressEl(t);
+  if (pe) { pe.className += " press"; setTimeout(function () { pe.className = pe.className.replace(/ press/g, ""); }, 220); }
+  if (S.playing && !S.mini) { dg = null; return; }
+  while (t && t !== document.body) { if (t.id === "cats" || t.id === "items") { box = t.id; break; } t = t.parentNode; }
+  dg = box ? { box: box, y: e.touches[0].clientY, x: e.touches[0].clientX, moved: false, acc: 0, el: e.target } : null;
+  /* liste yeniden çizilince dokunulan öğe sayfadan çıkar; olaylar ona gelmeye devam eder, o yüzden dinleyici öğenin kendisinde */
+  if (dg) { e.target.addEventListener("touchmove", dgMove, { passive: false }); e.target.addEventListener("touchend", dgEnd, false); e.target.addEventListener("touchcancel", dgEnd, false); }
+}, { passive: true });
+function dgEnd() { var el = dg && dg.el; if (el) { el.removeEventListener("touchmove", dgMove, { passive: false }); el.removeEventListener("touchend", dgEnd, false); el.removeEventListener("touchcancel", dgEnd, false); }
+  if (dg && dg.moved) swipeAt = new Date().getTime(); dg = null; }
+function dgMove(e) {
+  if (!dg || !e.touches || e.touches.length !== 1) return;
+  var y = e.touches[0].clientY, dy = (dg.y - y) / bodyK(); dg.y = y;
+  if (!dg.moved && Math.abs(e.touches[0].clientX - dg.x) > 30 && Math.abs(dy) < 4) return;
+  dg.acc += dy; if (Math.abs(dg.acc) > 8) dg.moved = true;
+  var grid = dg.box === "items" && gridMode(), rh = dg.box === "cats" ? 60 : (grid ? TH + GY : 52), n = 0;
+  while (dg.acc >= rh) { dg.acc -= rh; n++; } while (dg.acc <= -rh) { dg.acc += rh; n--; }
+  if (e.cancelable) e.preventDefault();
+  if (!n) return;
+  if (dg.box === "cats") { S.cS = (S.cS || 0) + n; S.cSM = true; drawCats(); }
+  else if (grid) { S.gS = (S.gS || 0) + n; S.gSM = true; drawGrid(); }
+  else if (!vgMode()) { S.iS = (S.iS || 0) + n; S.iSM = true; drawItems(); }
+}
 
 /* PC'den açılış parametresi (ares-launch -p '{"tab":"family","cat":2}'): ekran görüntüsü / test için istenen sekmeyle açılır */
 function launchParams() { var p = {}; try { if (/[?&]tab=/.test(location.search)) { p.tab = (/[?&]tab=([^&]+)/.exec(location.search) || [])[1]; return p; } var r = (window.PalmSystem && window.PalmSystem.launchParams) || (window.webOSSystem && window.webOSSystem.launchParams) || "{}"; p = typeof r === "string" ? JSON.parse(r || "{}") : r; } catch (e) {} return p || {}; }
