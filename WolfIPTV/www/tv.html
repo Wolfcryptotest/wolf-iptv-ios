@@ -274,7 +274,7 @@ body.touch .press { filter: brightness(1.45); }
 body.touch .tile.press, body.touch .hc.press, body.touch .vc.press { transform: scale(0.96); }
 /* 📱 büyük, kolay basılan sekmeler ve kategoriler (örnek uygulamadaki gibi) */
 body.touch #tabs { left: 176px; top: 6px; height: 52px; width: 860px; }
-body.touch .tab { height: 52px; line-height: 52px; font-size: 20px; width: 120px; border-radius: 12px; }
+body.touch .tab { height: 52px; line-height: 52px; font-size: 18px; width: 110px; border-radius: 12px; }
 body.touch .tab.on { background: #4a0d12; color: #fff; box-shadow: inset 0 -4px 0 #e4002b; }
 body.touch #cats .row { height: 56px; line-height: 56px; font-size: 23px; font-weight: bold; margin: 0 6px 4px; padding: 0 14px; border-radius: 10px; background: #1b1d25; }
 body.touch #cats .row.hd { background: transparent; height: 40px; line-height: 48px; font-size: 17px; }
@@ -284,9 +284,9 @@ body.touch #items .row { height: 52px; line-height: 52px; font-size: 23px; }
 body.touch #items .row.foc { background: #4a0d12; }
 body.touch #hHeroTxt .hint { display: none; }
 /* 📱 Favori / Son izlenen / Devam / Çok izlenen: sol menüde yer kaplamasın, üst çubukta küçük yuvarlak düğmeler (VAR'daki gibi) */
-#qtop { position: absolute; right: 274px; top: 7px; height: 50px; display: none; z-index: 3; white-space: nowrap; }
+#qtop { position: absolute; left: 870px; top: 8px; height: 50px; display: none; z-index: 3; white-space: nowrap; }
 body.touch.qon #qtop { display: block; }
-#qtop div { display: inline-block; width: 50px; height: 50px; line-height: 50px; margin-left: 8px; border-radius: 50%; text-align: center; font-size: 24px;
+#qtop div { display: inline-block; width: 48px; height: 48px; line-height: 48px; margin-left: 6px; border-radius: 50%; text-align: center; font-size: 22px;
   background: #b0101f; color: #fff; vertical-align: top; cursor: pointer; }
 #qtop div.on { background: #fff; color: #b0101f; box-shadow: 0 0 0 3px #e4002b; }
 /* 📱 basınca renk: filter yerine hafif arka plan (iPhone'da çok daha hızlı) */
@@ -326,7 +326,7 @@ body.touch #cBar.drag { height: 20px; } body.touch #cBar.drag #cFill:after { wid
 /* Wolf IPTV - eski akıllı TV tarayıcıları için hafif ekran (ES5, kütüphanesiz) */
 var ROWS = 14, CROWS = 17;
 if (("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0) { ROWS = 11; CROWS = 10; }   /* telefonda büyük satırlar */
-var PAGE_VER = "20261114-05";
+var PAGE_VER = "20261114-06";
 var DEROWS = 8;   /* sayfa güncellenince TV kendiliğinden yeniler */
 var TABS = [["home", "Ana sayfa"], ["live", "Canlı TV"], ["vod", "Filmler"], ["series", "Diziler"], ["search", "🔍 Ara"], ["web", "🌐 Web"]];
 /* aile filmleri: Filmler sekmesinin içinde "👪 Aile Filmleri" kategorisi (ayrı sekme yok) */
@@ -451,7 +451,7 @@ function drawTabs() {
   var h = "", i;
   for (i = 0; i < TABS.length; i++)
     h += '<div data-t="' + i + '" class="tab' + (i === S.tab ? " on" : "") + (S.col === 0 && i === S.tab ? " foc" : "") +
-      '" style="left:' + (i * (TOUCH ? 126 : 112)) + 'px;' + (S.col === 0 && i === S.tab ? "background:#2f5bd3;color:#fff" : "") + '">' + (TOUCH && TICO[TABS[i][0]] && !/^\W/.test(TABS[i][1]) ? TICO[TABS[i][0]] + " " + (TABS[i][0] === "home" ? "Ana" : TABS[i][1]) : TABS[i][1]) + "</div>";
+      '" style="left:' + (i * (TOUCH ? 116 : 112)) + 'px;' + (S.col === 0 && i === S.tab ? "background:#2f5bd3;color:#fff" : "") + '">' + (TOUCH && TICO[TABS[i][0]] && !/^\W/.test(TABS[i][1]) ? TICO[TABS[i][0]] + " " + (TABS[i][0] === "home" ? "Ana" : TABS[i][1]) : TABS[i][1]) + "</div>";
   $("tabs").innerHTML = h;
 }
 function winStart(key, sel, n, R) { R = R || ROWS; var st = S[key] || 0; if (S[key + "M"]) { if (st > n - R) st = n - R; if (st < 0) st = 0; S[key] = st; return st; }   /* parmakla kaydırıldı */
@@ -801,6 +801,7 @@ function ctlShow() {
   if (!ctlOn()) { $("ctl").style.display = "none"; return; }
   $("cTitle").innerHTML = esc(S.now.title || "");
   $("ctl").style.display = "block"; $("osd").style.display = "none"; ctlUpd(); trkBtns();
+  if (TOUCH && !S.tbon && !S.mini && !plOpen()) tbShow();   /* 📱 alt ve üst düğmeler hep birlikte görünsün */
   clearTimeout(ctlT); ctlT = setTimeout(function () { if (!vPaused() && !S.scrub && !plOpen()) { $("ctl").style.display = "none"; if (TOUCH) tbHide(); } }, 4500);
 }
 function seekAbs(t) {
@@ -1093,7 +1094,9 @@ function detBtns() {
   var D = S.det, it = D.it, b = [], fav = !!S.favs[D.k + ":" + idOf(D.k, it)];
   if (D.k === "vod") { var p = POS["vod:" + it.stream_id];
     if (p && p[0] > 60) { b.push(["▶ Devam et (" + fmtT(p[0]) + ")", "res"]); b.push(["↺ Baştan oynat", "start"]); } else b.push(["▶ Oynat", "start"]); }
-  else if (D.seas.length) b.push(["▶ " + (it._ep_id ? "Kaldığın bölüm" : "1. bölümden başla"), "ep"]);
+  else if (D.seas.length) { b.push(["▶ " + (it._ep_id ? "Kaldığın bölüm" : "1. bölümden başla"), "ep"]);
+    var lsL = D.eps[D.seas[D.seas.length - 1]] || [], ls = lsL[lsL.length - 1];
+    if (ls) b.push(["⏭ Son bölüm" + (ls.episode_num ? " (" + (D.seas.length > 1 ? D.seas[D.seas.length - 1] + ". sz " : "") + ls.episode_num + ".)" : ""), "last"]); }
   b.push([fav ? "★ Favorilerden çıkar" : "☆ Favorilere ekle", "fav"]);
   if (!KIDS && window.WOLF_DIRECT) { var kc = kcfg(), kk = D.k + ":" + idOf(D.k, it);
     b.push([kc.block[kk] ? "👶 Çocuklardan: Gizli" : (kc.allow[kk] ? "👶 Çocuklara: İzinli" : "👶 Çocuk: Otomatik"), "kid"]); }
@@ -1153,6 +1156,7 @@ function detAct(a) {
     return;
   }
   if (a === "ep") { if (!it._ep_id) { D.s = 0; D.e = 0; } detPlayEp(D.e); return; }
+  if (a === "last") { D.s = D.seas.length - 1; D.e = Math.max(0, detEps().length - 1); D.eS = 0; detDraw(); detPlayEp(D.e); return; }
   if (a === "kid") { var kc = kcfg(), kk = D.k + ":" + idOf(D.k, it);   /* Otomatik → Gizli → İzinli → Otomatik */
     if (kc.block[kk]) { delete kc.block[kk]; kc.allow[kk] = 1; toast("👶 Bu içerik çocuk modunda HER ZAMAN görünür", 2500); }
     else if (kc.allow[kk]) { delete kc.allow[kk]; toast("👶 Çocuk modu bu içerik için yaş kuralına göre karar verir", 2500); }
@@ -2320,7 +2324,7 @@ document.addEventListener("click", function (e) {
     if (t.id === "cBar" || t.id === "cFill") { if (!TOUCH) seekTo(e); return; }
     if (plOpen()) { if (!$("plist").contains(t)) plClose(); return; }
     if (TOUCH) {   /* 📱 boş yere dokun: düğmeler aç / kapa (yanlışlıkla durdurmasın; durdurmak için ortadaki ▶❚❚) */
-      if (S.tbon || $("ctl").style.display === "block") { tbHide(); $("ctl").style.display = "none"; }
+      if (S.tbon) { tbHide(); $("ctl").style.display = "none"; }
       else { tbShow(); if (!S.now.live) ctlShow(); }
       return;
     }
@@ -2443,6 +2447,33 @@ document.addEventListener("touchend", function (e) {
   if (S.now.live) { if (dx < 0) tbAct("list"); return; }
   if (!S.now.yt && !S.now.web) { seekBy(dx > 0 ? 10 : -10); ctlShow(); }
 }, { passive: true });
+/* ⚡ 📱 anında dokunuş: iPhone parmak kalkınca tıklamayı geç yolluyor; düğmelerde beklemeden hemen çalıştır */
+var ft = null;
+function fastEl(t) {
+  if (!t || !t.tagName || /^(INPUT|TEXTAREA|SELECT|IFRAME|A|OPTION|LABEL)$/.test(t.tagName)) return false;
+  if (S.playing && !S.mini) return true;
+  while (t && t !== document.body && t.getAttribute) {
+    if (t.getAttribute("data-i") !== null || t.getAttribute("data-t") !== null || t.getAttribute("data-tb") !== null || t.getAttribute("data-pl") !== null ||
+        t.getAttribute("data-q") !== null || t.getAttribute("data-e") !== null || t.getAttribute("data-s") !== null || t.getAttribute("data-h") !== null ||
+        t.getAttribute("data-b") !== null || t.getAttribute("data-d") !== null) return true;
+    if (/^(INPUT|TEXTAREA|SELECT|A)$/.test(t.tagName)) return false;
+    t = t.parentNode;
+  }
+  return false;
+}
+window.addEventListener("touchstart", function (e) {
+  ft = (TOUCH && e.touches && e.touches.length === 1) ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: new Date().getTime(), el: e.target } : null;
+}, { passive: true, capture: true });
+window.addEventListener("touchmove", function (e) {
+  if (ft && e.touches && e.touches[0] && Math.abs(e.touches[0].clientX - ft.x) + Math.abs(e.touches[0].clientY - ft.y) > 14) ft = null;
+}, { passive: true, capture: true });
+window.addEventListener("touchend", function (e) {
+  var f = ft; ft = null;
+  if (!f || new Date().getTime() - f.t > 700 || S.scrub || !fastEl(f.el)) return;
+  if (new Date().getTime() - swipeAt < 600) return;
+  if (e.cancelable) e.preventDefault();   /* iPhone'un geç gelen tıklamasını iptal et */
+  var el = f.el; setTimeout(function () { if (new Date().getTime() - swipeAt < 600) return; try { el.click(); } catch (er) {} }, 0);
+}, { passive: false, capture: true });
 /* kaydırma bitince gelen sahte tıklamayı yut */
 document.addEventListener("click", function (e) {
   if (new Date().getTime() - swipeAt < 600) { e.stopImmediatePropagation(); if (e.preventDefault) e.preventDefault(); }
