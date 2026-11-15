@@ -1,0 +1,14 @@
+plugins { id "com.android.application" }
+android {
+    namespace "com.wolf.iptv"
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.wolf.iptv"
+        minSdk 24
+        targetSdk 34
+        versionCode 20
+        versionName "2.0"
+    }
+    buildTypes { debug { minifyEnabled false } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

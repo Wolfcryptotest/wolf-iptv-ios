@@ -4,7 +4,10 @@ import AVFoundation
 
 @main
 struct WolfIPTVApp: App {
-    init() { try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
+    init() {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
     var body: some Scene { WindowGroup { WebView().ignoresSafeArea().statusBarHidden(true) } }
 }
 
@@ -12,6 +15,7 @@ struct WolfIPTVApp: App {
 /// sayfalar IPTV sağlayıcısına doğrudan bağlanır, PC gerekmez.
 struct WebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
+        UIApplication.shared.isIdleTimerDisabled = true   // izlerken ekran kararmasın
         let cfg = WKWebViewConfiguration()
         cfg.allowsInlineMediaPlayback = true
         cfg.mediaTypesRequiringUserActionForPlayback = []

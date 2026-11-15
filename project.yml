@@ -8,6 +8,7 @@ targets:
     platform: iOS
     sources:
       - path: WolfIPTV/App.swift
+      - path: WolfIPTV/Assets.xcassets
       - path: WolfIPTV/www
         type: folder
         buildPhase: resources
@@ -15,8 +16,8 @@ targets:
       path: WolfIPTV/Info.plist
       properties:
         CFBundleDisplayName: Wolf IPTV
-        CFBundleShortVersionString: "1.9"
-        CFBundleVersion: "10"
+        CFBundleShortVersionString: "2.0"
+        CFBundleVersion: "20"
         UILaunchScreen: {}
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
@@ -25,5 +26,6 @@ targets:
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.wolf.iptv
       TARGETED_DEVICE_FAMILY: "1,2"
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       CODE_SIGNING_ALLOWED: "NO"
       CODE_SIGNING_REQUIRED: "NO"

@@ -308,6 +308,16 @@ body.touch #cBar.drag { height: 20px; } body.touch #cBar.drag #cFill:after { wid
 #plist .pr.on { background: #2f5bd3; color: #fff; font-weight: bold; }
 #player.pl #plist { display: block; }
 #player.mini #plist { display: none !important; }
+/* 📱 v2.0 Titan tarzı oynatıcı: görüntü modu ipucu, ekran kilidi, sığan düğmeler */
+body.touch #tbTitle { max-width: 240px; }
+body.touch .tb { padding: 0 20px; margin-right: 12px; } body.touch .tbr { margin: 0 0 0 12px; }
+#vmTip { position: absolute; left: 0; right: 0; top: 44%; margin: 0 auto; width: 380px; text-align: center; font-size: 40px; font-weight: bold; color: #fff;
+  background: rgba(0,0,0,0.6); border-radius: 18px; padding: 14px 0; display: none; z-index: 7; pointer-events: none; }
+#lockOv { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: none; z-index: 9; }
+body.lock #player:not(.mini) #lockOv { display: block; }
+#lockBtn { position: absolute; top: 30px; left: calc(40px + var(--sl, 0px)); height: 76px; line-height: 76px; padding: 0 30px; font-size: 32px; font-weight: bold;
+  color: #fff; background: rgba(30,32,41,0.9); border: 2px solid rgba(255,255,255,0.3); border-radius: 38px; display: none; }
+#player.mini #vmTip, #player.mini #lockOv { display: none !important; }
 </style>
 </head>
 <body>
@@ -318,7 +328,7 @@ body.touch #cBar.drag { height: 20px; } body.touch #cBar.drag #cFill:after { wid
 <div id="help">OK: oynat &nbsp;•&nbsp; P+/P− veya ▲▼: kanal &nbsp;•&nbsp; 0-9: kanal no &nbsp;•&nbsp; canlıda ◀▶: ses &nbsp;•&nbsp; Geri: geri &nbsp;•&nbsp; <b>Kırmızı</b>: favori</div>
 <div id="info"></div><div id="det"><div id="dPoster"></div><div id="dBody"><div id="dTitle"></div><div id="dMeta"></div><div id="dCrew"></div><div id="dPlot"></div><div id="dBtns"></div><div id="dSeas"></div><div id="dEps"></div></div></div><div id="keys"></div><div id="epg"></div><div id="pv"><div id="pvPic"></div><div id="pvTxt"></div><div id="pvEpg">📅 TV Rehberi  (Yeşil tuş)</div></div>
 <div id="toast"></div><div id="home"><div id="hHero"><div id="hHeroImg"></div><div id="hHeroFade"></div><div id="hHeroTxt"></div></div><div id="hRows"></div></div><div id="site"><div id="siteBar"><span id="sbClose">✕ Kapat</span><span id="sbHome">⌂ Ana sayfa</span><span id="sbTtl"></span><span id="sbHint">Sitede imleçle gez • çıkmak için ✕ Kapat</span></div><iframe id="siteFr" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe></div><div id="pick"></div><div id="panel"></div><div id="qbox"><p>Kanal, film, dizi ya da YouTube'da aranacak şeyi yaz — bitince OK / Enter</p><input id="q" type="text" autocomplete="off"></div><div id="num"></div>
-<div id="player"><video id="v" autoplay playsinline webkit-playsinline></video><iframe id="yt" allow="autoplay; encrypted-media; fullscreen" allowfullscreen tabindex="-1"></iframe><div id="osd"><div id="osdT"></div><div id="osdE"></div></div><div id="msg"></div><div id="ytShield"></div><div id="pFull">⛶</div><div id="ctl"><div id="cTitle"></div><div id="cBar"><div id="cFill"></div><div id="cTip"></div></div><div id="cBtns"><span id="cRew" class="rb" title="10 sn geri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 1-15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l-9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cPlay" class="rb" title="Oynat / duraklat"></span><span id="cFwd" class="rb" title="10 sn ileri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 0 15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cAud" class="pl">Ses</span><span id="cSub" class="pl">Altyazı</span><span id="cTime"></span></div></div><div id="pBack">◀ Geri</div><div id="pPlay">❚❚ / ▶</div><div id="tbar"><span data-tb="close" class="tb">✕</span><span data-tb="list" class="tb">☰ Liste</span><span id="tbTitle"></span><span data-tb="fit" id="tbFit" class="tb tbr">⤢ Doldur</span><span data-tb="mute" id="tbMute" class="tb tbr">🔊 Ses</span></div><div id="tbPrev" data-tb="prev" class="tbz">‹</div><div id="tbNext" data-tb="next" class="tbz">›</div><div id="plist"></div></div>
+<div id="player"><video id="v" autoplay playsinline webkit-playsinline></video><iframe id="yt" allow="autoplay; encrypted-media; fullscreen" allowfullscreen tabindex="-1"></iframe><div id="osd"><div id="osdT"></div><div id="osdE"></div></div><div id="msg"></div><div id="ytShield"></div><div id="pFull">⛶</div><div id="ctl"><div id="cTitle"></div><div id="cBar"><div id="cFill"></div><div id="cTip"></div></div><div id="cBtns"><span id="cRew" class="rb" title="10 sn geri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 1-15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l-9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cPlay" class="rb" title="Oynat / duraklat"></span><span id="cFwd" class="rb" title="10 sn ileri"><svg viewBox="0 0 48 48"><path d="M24 8a16 16 0 1 0 15.2 11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 2v12l9-6z" fill="#fff"/><text x="24" y="30.5" font-size="13" font-weight="700" font-family="Arial" fill="#fff" text-anchor="middle">10</text></svg></span><span id="cAud" class="pl">Ses</span><span id="cSub" class="pl">Altyazı</span><span id="cTime"></span></div></div><div id="pBack">◀ Geri</div><div id="pPlay">❚❚ / ▶</div><div id="tbar"><span data-tb="close" class="tb">✕</span><span data-tb="list" class="tb">☰ Liste</span><span id="tbTitle"></span><span data-tb="fit" id="tbFit" class="tb tbr">⤢ Doldur</span><span data-tb="mute" id="tbMute" class="tb tbr">🔊</span><span data-tb="spd" id="tbSpd" class="tb tbr">1x</span><span data-tb="pip" id="tbPip" class="tb tbr">⧉</span><span data-tb="lock" id="tbLock" class="tb tbr">🔒</span></div><div id="tbPrev" data-tb="prev" class="tbz">‹</div><div id="tbNext" data-tb="next" class="tbz">›</div><div id="plist"></div><div id="vmTip"></div><div id="lockOv"><span id="lockBtn">🔓 Kilidi aç</span></div></div>
 
 <script src="meta.js"></script>
 <script src="direct.js"></script>
@@ -2544,6 +2554,117 @@ function applyLaunch(p) {
   return false;
 }
 document.addEventListener("webOSRelaunch", function () { applyLaunch(launchParams()); }, false);
+
+/* ---------- 📱 v2.0 Titan tarzı oynatıcı: görüntü modları, iki parmakla yakınlaştırma, çift dokunma, küçük pencere (PiP), hız, ekran kilidi ----------
+   Sığdır / Doldur / Uzat / 16:9 / 4:3 • iki parmak: yakınlaştır • çift dokun: solda 10 sn geri, sağda 10 sn ileri, ortada Sığdır↔Doldur */
+var VM = [["fit", "Sığdır"], ["fill", "Doldur"], ["str", "Uzat"], ["169", "16:9"], ["43", "4:3"]];
+var RATES = [1, 1.25, 1.5, 2, 0.5, 0.75];
+S.fill = false; S.zoom = 1; S.lock = false; S.rate = 0;
+S.vm = 0; try { var vmS = localStorage.getItem("wolf_vm"); S.vm = vmS !== null ? (+vmS || 0) % VM.length : (localStorage.getItem("wolf_fill") === "1" ? 1 : 0); } catch (e) {}
+function vodNow() { return !!(S.now && !S.now.live && !S.now.yt && !S.now.web); }
+function vmApply() {
+  var s = V.style, m = VM[S.vm][0], full = S.playing && !S.mini && !(S.now && (S.now.yt || S.now.web));
+  s.left = "0"; s.top = "0"; s.width = "100%"; s.height = "100%"; s.objectFit = ""; s.transform = s.webkitTransform = "";
+  if (!full) return;
+  if (m === "fill") s.objectFit = "cover";
+  else if (m === "str") s.objectFit = "fill";
+  else if (m === "169" || m === "43") {
+    var P = $("player"), W = P.clientWidth || 1280, H = P.clientHeight || 720, r = m === "169" ? 16 / 9 : 4 / 3, w = W, h = W / r;
+    if (h > H) { h = H; w = H * r; }
+    s.objectFit = "fill"; s.width = Math.round(w) + "px"; s.height = Math.round(h) + "px"; s.left = Math.round((W - w) / 2) + "px"; s.top = Math.round((H - h) / 2) + "px";
+  }
+  if (S.zoom > 1.01) s.transform = s.webkitTransform = "scale(" + S.zoom.toFixed(3) + ")";
+}
+var vmTipT = null;
+function vmTip(t) { var e = $("vmTip"); e.innerHTML = t; e.style.display = "block"; clearTimeout(vmTipT); vmTipT = setTimeout(function () { e.style.display = "none"; }, 900); }
+function vmSet(i) { S.vm = (i + VM.length) % VM.length; S.zoom = 1; try { localStorage.setItem("wolf_vm", String(S.vm)); } catch (e) {} vmApply(); vmTip("▣ " + VM[S.vm][1]); }
+function pipOK() {
+  if (!S.now || S.now.yt || S.now.web) return false;
+  return !!(window.WolfAndroid || (V.webkitSupportsPresentationMode && V.webkitSupportsPresentationMode("picture-in-picture")) || (document.pictureInPictureEnabled && V.requestPictureInPicture));
+}
+function pipGo() {
+  tbHide();
+  try {
+    if (window.WolfAndroid && WolfAndroid.pip) { WolfAndroid.pip(); return; }
+    if (V.webkitSupportsPresentationMode && V.webkitSupportsPresentationMode("picture-in-picture")) {
+      V.webkitSetPresentationMode(V.webkitPresentationMode === "picture-in-picture" ? "inline" : "picture-in-picture"); return; }
+    if (document.pictureInPictureElement) { document.exitPictureInPicture(); return; }
+    var p = V.requestPictureInPicture(); if (p && p["catch"]) p["catch"](function () { toast("Küçük pencere bu cihazda açılamadı"); });
+  } catch (e) { toast("Küçük pencere bu cihazda açılamadı"); }
+}
+/* Android: uygulama küçük pencereye geçince düğmeleri gizle */
+window.wolfPip = function (on) { if (on) { tbHide(); $("ctl").style.display = "none"; } };
+function spdApply() { try { V.playbackRate = vodNow() ? RATES[S.rate] : 1; } catch (e) {} }
+function spdNext() { S.rate = (S.rate + 1) % RATES.length; spdApply(); vmTip("Hız " + RATES[S.rate] + "x"); }
+var lockT = null;
+function lockOn() { S.lock = true; tbHide(); plClose(); $("ctl").style.display = "none"; setCls(); vmTip("🔒 Ekran kilitlendi"); lockHint(); }
+function lockOff() { S.lock = false; $("lockBtn").style.display = "none"; setCls(); tbShow(); }
+function lockHint() { var b = $("lockBtn"); b.style.display = "block"; clearTimeout(lockT); lockT = setTimeout(function () { b.style.display = "none"; }, 3000); }
+(function () {
+  var o = $("lockOv");
+  o.addEventListener("touchstart", function (e) { e.stopPropagation(); }, { passive: true });
+  o.addEventListener("touchmove", function (e) { e.stopPropagation(); if (e.cancelable) e.preventDefault(); }, { passive: false });
+  o.addEventListener("touchend", function (e) { e.stopPropagation(); }, false);
+  o.addEventListener("click", function (e) { e.stopPropagation(); if (e.target.id === "lockBtn") lockOff(); else lockHint(); }, false);
+})();
+/* mevcut işlevlere ekler: düğme şeridi, görüntü modu, kapanınca sıfırla */
+var _tbShow = tbShow; tbShow = function () {
+  if (S.lock) return; _tbShow(); if (!S.tbon) return;
+  $("tbFit").innerHTML = "▣ " + VM[S.vm][1];
+  $("tbMute").innerHTML = V.muted ? "🔇" : "🔊";
+  $("tbSpd").style.display = vodNow() ? "" : "none"; $("tbSpd").innerHTML = RATES[S.rate] + "x";
+  $("tbPip").style.display = pipOK() ? "" : "none";
+};
+var _tbAct = tbAct; tbAct = function (a) {
+  if (a === "fit") { vmSet(S.vm + 1); tbShow(); return; }
+  if (a === "pip") { pipGo(); return; }
+  if (a === "spd") { spdNext(); tbShow(); return; }
+  if (a === "lock") { lockOn(); return; }
+  _tbAct(a);
+};
+var _setCls = setCls; setCls = function () { _setCls(); if (S.lock && S.playing) document.body.className += " lock"; };
+var _fitScreen = fitScreen; fitScreen = function () { _fitScreen(); try { vmApply(); } catch (e) {} };
+var _closePlayer = closePlayer; closePlayer = function () { S.zoom = 1; S.lock = false; _closePlayer(); vmApply(); setCls(); };
+V.addEventListener("loadedmetadata", function () { vmApply(); spdApply(); }, false);
+V.addEventListener("playing", spdApply, false);
+/* iki parmakla yakınlaştır / uzaklaştır */
+var pz = null;
+function tDist(t) { var x = t[0].clientX - t[1].clientX, y = t[0].clientY - t[1].clientY; return Math.sqrt(x * x + y * y) || 1; }
+document.addEventListener("touchstart", function (e) {
+  if (!e.touches || e.touches.length !== 2 || !S.playing || S.mini || S.lock || !S.now || S.now.yt || S.now.web) return;
+  pz = { d: tDist(e.touches), z: S.zoom }; tsOn = false; S.scrub = null; tbHide();
+}, { passive: true });
+document.addEventListener("touchmove", function (e) {
+  if (!pz || !e.touches || e.touches.length !== 2) return;
+  if (e.cancelable) e.preventDefault();
+  S.zoom = Math.max(1, Math.min(4, pz.z * tDist(e.touches) / pz.d)); vmApply(); vmTip("🔍 " + S.zoom.toFixed(1) + "x");
+}, { passive: false });
+document.addEventListener("touchend", function (e) {
+  if (!pz) return; if (e.touches && e.touches.length >= 2) return;
+  pz = null; swipeAt = new Date().getTime(); if (S.zoom < 1.08) { S.zoom = 1; vmApply(); }
+}, { passive: true });
+/* çift dokunma: sol üçte bir 10 sn geri, sağ üçte bir 10 sn ileri, orta Sığdır ↔ Doldur */
+var dt = { t: 0, x: 0, sx: 0, sy: 0, st: 0 };
+document.addEventListener("touchstart", function (e) {
+  if (e.touches && e.touches.length === 1) { dt.sx = e.touches[0].clientX; dt.sy = e.touches[0].clientY; dt.st = new Date().getTime(); } else dt.t = 0;
+}, { passive: true });
+document.addEventListener("touchend", function (e) {
+  if (!S.playing || S.mini || S.lock || S.scrub || pz || !S.now || S.now.yt || S.now.web) { dt.t = 0; return; }
+  var c = e.changedTouches && e.changedTouches[0], g = e.target, now = new Date().getTime();
+  if (!c || (e.touches && e.touches.length)) return;
+  if (inEl(g, "tbar") || inEl(g, "ctl") || inEl(g, "plist") || inEl(g, "lockOv") || (g.className && /tbz/.test(g.className))) { dt.t = 0; return; }
+  if (Math.abs(c.clientX - dt.sx) + Math.abs(c.clientY - dt.sy) > 24 || now - dt.st > 350) { dt.t = 0; return; }
+  if (now - dt.t < 330 && Math.abs(c.clientX - dt.x) < 140) {
+    dt.t = 0; swipeAt = now; tbHide();
+    var fx = c.clientX / (window.innerWidth || 1);
+    if (vodNow() && fx < 0.34) { seekBy(-10); vmTip("⏪ 10 sn"); ctlShow(); }
+    else if (vodNow() && fx > 0.66) { seekBy(10); vmTip("10 sn ⏩"); ctlShow(); }
+    else vmSet(S.vm === 1 ? 0 : 1);
+    return;
+  }
+  dt.t = now; dt.x = c.clientX;
+}, { passive: true });
+
 if (!applyLaunch(launchParams())) loadTab(0);
 </script>
 </body>
