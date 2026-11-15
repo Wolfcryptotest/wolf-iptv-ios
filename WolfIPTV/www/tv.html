@@ -318,6 +318,11 @@ body.lock #player:not(.mini) #lockOv { display: block; }
 #lockBtn { position: absolute; top: 30px; left: calc(40px + var(--sl, 0px)); height: 76px; line-height: 76px; padding: 0 30px; font-size: 32px; font-weight: bold;
   color: #fff; background: rgba(30,32,41,0.9); border: 2px solid rgba(255,255,255,0.3); border-radius: 38px; display: none; }
 #player.mini #vmTip, #player.mini #lockOv { display: none !important; }
+/* ⚡ v2.1 VLC açıkken: görüntü sayfanın arkasında, tam ekranda menüler gizli */
+html.vlcon, html.vlcon body { background: transparent !important; }
+html.vlcon #player { background: transparent !important; }
+html.vlcon #v { visibility: hidden; }
+html.vlcfull body > *:not(#player):not(#toast):not(#panel):not(#qbox):not(#pick) { visibility: hidden !important; }
 </style>
 </head>
 <body>
@@ -2664,6 +2669,139 @@ document.addEventListener("touchend", function (e) {
   }
   dt.t = now; dt.x = c.clientX;
 }, { passive: true });
+
+
+/* ---------- ⚡ v2.1 VLC oynatıcı (yalnız telefon uygulamasında: Android libVLC / iPhone MobileVLCKit) ----------
+   Sayfa <video> öğesini kullanmaya devam eder; VLC açıkken aynı özellikler (currentTime, paused, play…) VLC'ye yönlenir.
+   Oynatıcı: Oto = Android'de canlı yayın ve MKV/AVI VLC ile, iPhone'da önce telefonun oynatıcısı, açılmazsa VLC.
+   TV ve PC'de bu bölüm hiç çalışmaz. */
+(function () {
+  var NAT = (window.WolfAndroid && WolfAndroid.vlc) ? "a" :
+    ((window.webkit && webkit.messageHandlers && webkit.messageHandlers.wolfvlc) ? "i" : "");
+  if (!NAT) return;
+  function nat(c, a) { try { if (NAT === "a") WolfAndroid.vlc(c, JSON.stringify(a || {})); else webkit.messageHandlers.wolfvlc.postMessage({ c: c, a: a || {} }); } catch (e) {} }
+  var P = HTMLMediaElement.prototype, H = document.documentElement;
+  var VL = window.VL = { on: false, url: "", t: 0, d: NaN, paused: true, playing: false, pend: false, rate: 1, muted: false, meta: false, na: 0, ns: 0, tick: 0, tried: {} };
+  var MODES = [["oto", "Oto"], ["vlc", "VLC"], ["yerel", "Yerel"]];
+  function mode() { try { return localStorage.getItem("wolf_oyn") || "oto"; } catch (e) { return "oto"; } }
+  function isLive() { return !!(S.now && S.now.live); }
+  function wantVlc(u) {
+    var m = mode(); if (m === "vlc") return true; if (m === "yerel") return false;
+    if (VL.tried[u]) return true;
+    if (/\.(mkv|avi|flv|wmv|mpg|mpeg|vob|ts|divx|3gp)(\?|$)/i.test(u)) return true;
+    return NAT === "a" && isLive();   /* Android: canlı yayın VLC ile daha hızlı açılır */
+  }
+  function fire(t) { try { V.dispatchEvent(new Event(t)); } catch (e) {} }
+  function dsc(n) { var o = P; while (o) { var d = Object.getOwnPropertyDescriptor(o, n); if (d) return d; o = Object.getPrototypeOf(o); } return null; }
+  var dSrc = dsc("src");
+  function vlcStart(u, start) {
+    if (!VL.on) { try { P.pause.call(V); } catch (e) {} V.removeAttribute("src"); try { P.load.call(V); } catch (e) {} }
+    var live = isLive();
+    VL.on = true; VL.url = u; VL.t = start || 0; VL.d = NaN; VL.paused = false; VL.playing = false; VL.pend = false; VL.meta = false; VL.na = 0; VL.ns = 0; VL.tick = Date.now();
+    H.className = (H.className.replace(/ ?vlcon/g, "") + " vlcon");
+    nat("play", { url: live ? u.replace(/\.m3u8(\?|$)/, ".ts$1") : u, start: start || 0, live: live, rate: live ? 1 : VL.rate, muted: VL.muted });
+    rectSync(true); scaleSync();
+  }
+  function vlcStop() {
+    if (!VL.on) return; VL.on = false; VL.playing = false; VL.paused = true; VL.url = "";
+    nat("stop"); H.className = H.className.replace(/ ?vlc(on|full)/g, ""); lastR = "";
+  }
+  /* <video> özellikleri: VLC açıkken VLC'den */
+  Object.defineProperty(V, "src", { configurable: true,
+    get: function () { return VL.on ? VL.url : dSrc.get.call(V); },
+    set: function (u) { u = String(u || ""); if (u && !/^blob:|^data:/.test(u) && wantVlc(u)) { vlcStart(u, 0); VL.pend = true; } else { vlcStop(); dSrc.set.call(V, u); } } });
+  function hk(n, get, set) {
+    var d = dsc(n); if (!d) return;
+    Object.defineProperty(V, n, { configurable: true,
+      get: function () { return VL.on ? get() : d.get.call(V); },
+      set: function (x) { if (VL.on) { if (set) set(x); } else if (d.set) d.set.call(V, x); } });
+  }
+  hk("currentTime", function () { return VL.t; }, function (x) { x = Math.max(0, +x || 0); VL.t = x; nat("seek", { t: x }); fire("timeupdate"); });
+  hk("duration", function () { return VL.d; });
+  hk("paused", function () { return VL.paused; });
+  hk("ended", function () { return false; });
+  hk("seeking", function () { return false; });
+  hk("readyState", function () { return VL.playing ? 4 : 1; });
+  hk("error", function () { return null; });
+  hk("muted", function () { return VL.muted; }, function (x) { VL.muted = !!x; nat("vol", { muted: VL.muted }); });
+  hk("volume", function () { return 1; }, function () {});
+  hk("playbackRate", function () { return VL.rate; }, function (x) { VL.rate = +x || 1; nat("rate", { r: isLive() ? 1 : VL.rate }); });
+  hk("audioTracks", function () { return null; });
+  hk("textTracks", function () { return null; });
+  hk("videoWidth", function () { return 1920; });
+  hk("videoHeight", function () { return 1080; });
+  V.play = function () { if (VL.on) { VL.paused = false; nat("resume"); fire("play"); return Promise.resolve(); } return P.play.call(V); };
+  V.pause = function () { if (VL.on) { if (!VL.paused) { VL.paused = true; nat("pause"); fire("pause"); } return; } return P.pause.call(V); };
+  V.load = function () { if (VL.on) { if (VL.pend) { VL.pend = false; return; } vlcStop(); return; } return P.load.call(V); };
+  /* VLC → sayfa */
+  window.wolfVlcEv = function (type, d) {
+    if (!VL.on) return;
+    d = d || {};
+    if (d.t != null && d.t >= 0) { if (Math.abs(d.t - VL.t) > 0.01) VL.tick = Date.now(); VL.t = d.t; }
+    if (d.d > 0) VL.d = d.d;
+    if (d.na != null) VL.na = d.na; if (d.ns != null) VL.ns = d.ns;
+    if (type === "playing") {
+      VL.paused = false; VL.playing = true; VL.tick = Date.now();
+      if (!VL.meta) { VL.meta = true; fire("loadedmetadata"); fire("canplay"); }
+      fire("playing"); try { trkBtns(); } catch (e) {}
+    } else if (type === "pause") { VL.paused = true; fire("pause"); }
+    else if (type === "time") fire("timeupdate");
+    else if (type === "ended") { VL.paused = true; VL.playing = false; fire("ended"); }
+    else if (type === "error") { VL.playing = false; fire("error"); }
+    else if (type === "track") { toast(d.name || "", 2500); try { ctlShow(); } catch (e) {} }
+  };
+  /* telefonun oynatıcısı açamazsa aynı yayını VLC ile dene (hata mesajı göstermeden) */
+  V.addEventListener("error", function (e) {
+    if (VL.on || mode() === "yerel" || !S.now || S.now.yt || S.now.web) return;
+    var u = dSrc.get.call(V); if (!u || VL.tried[u]) return;
+    VL.tried[u] = 1; e.stopImmediatePropagation();
+    var t = 0; try { t = dsc("currentTime").get.call(V) || 0; } catch (er) {}
+    osd(S.now.title, "VLC ile açılıyor…"); vlcStart(u, t > 2 ? t : 0);
+  }, true);
+  /* VLC'de görüntü takılırsa (canlıda 15 sn ilerlemezse) yeniden bağlan */
+  setInterval(function () {
+    if (!VL.on || VL.paused || !S.now || !isLive()) return;
+    if (Date.now() - VL.tick > 15000) { VL.tick = Date.now(); osd(S.now.title, "Bağlantı toparlanıyor…"); startUrl(S.now.url); }
+  }, 3000);
+  /* VLC görüntüsünün yeri: tam ekranda sayfanın arkasında (düğmeler üstte), küçük pencerede sayfanın üstünde */
+  var lastR = "";
+  function rectSync(force) {
+    if (!VL.on) return;
+    var pl = $("player"), full = S.playing && !S.mini, vis = pl.style.display !== "none" && !(S.now && (S.now.yt || S.now.web));
+    var r = pl.getBoundingClientRect(), a = vis ? { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), top: !full } : { x: 0, y: 0, w: 0, h: 0, top: false };
+    var k = JSON.stringify(a); if (k === lastR && !force) return; lastR = k;
+    H.className = H.className.replace(/ ?vlcfull/g, "") + (full ? " vlcfull" : "");
+    nat("rect", a);
+  }
+  setInterval(function () { rectSync(false); }, 250);
+  function scaleSync() { if (VL.on) nat("scale", { mode: VM[S.vm][0], zoom: S.zoom || 1 }); }
+  var _vmApply = vmApply; vmApply = function () { _vmApply(); scaleSync(); };
+  var _fs = fitScreen; fitScreen = function () { _fs(); setTimeout(function () { rectSync(true); }, 60); };
+  /* ses dili / altyazı: VLC'de bütün biçimlerde çalışır */
+  var _ca = cycleAudio; cycleAudio = function () { if (VL.on) { nat("track", { kind: "audio" }); return; } _ca(); };
+  var _cs = cycleSub; cycleSub = function () { if (VL.on) { nat("track", { kind: "sub" }); return; } _cs(); };
+  var _tb = trkBtns; trkBtns = function () {
+    if (!VL.on) { _tb(); return; }
+    $("cAud").style.display = VL.na > 1 ? "inline-block" : "none"; $("cSub").style.display = VL.ns > 0 ? "inline-block" : "none";
+  };
+  /* iPhone'da VLC görüntüsü küçük pencereye (PiP) alınamaz; Android'de alınır */
+  var _pipOK = pipOK; pipOK = function () { if (VL.on && NAT === "i") return false; return _pipOK(); };
+  /* oynatıcı seçimi düğmesi: Oto → VLC → Yerel (telefonun oynatıcısı) */
+  var ob = document.createElement("span"); ob.className = "tb tbr"; ob.id = "tbOyn"; ob.setAttribute("data-tb", "oyn");
+  var tbar = $("tbar"); tbar.insertBefore(ob, $("tbLock"));
+  function oynLbl() { var m = mode(), i; for (i = 0; i < MODES.length; i++) if (MODES[i][0] === m) return "▶ " + MODES[i][1]; return "▶ Oto"; }
+  var _tbShow2 = tbShow; tbShow = function () { _tbShow2(); if (S.tbon) $("tbOyn").innerHTML = oynLbl() + (VL.on ? " •" : ""); };
+  var _tbAct2 = tbAct; tbAct = function (a) {
+    if (a !== "oyn") { _tbAct2(a); return; }
+    var m = mode(), i = 0; for (var j = 0; j < MODES.length; j++) if (MODES[j][0] === m) i = j;
+    var nm = MODES[(i + 1) % MODES.length]; try { localStorage.setItem("wolf_oyn", nm[0]); } catch (e) {}
+    VL.tried = {}; toast("Oynatıcı: " + nm[1] + (nm[0] === "oto" ? " (gerekince VLC)" : ""), 2500);
+    if (S.now && !S.now.yt && !S.now.web) { var t = V.currentTime || 0; startUrl(S.now.url); if (!isLive() && t > 2) seekAfterLoad(t); }
+    tbShow();
+  };
+  /* VLC kapanırken: oynatıcı kapanınca durdur */
+  var _cp = closePlayer; closePlayer = function () { _cp(); vlcStop(); };
+})();
 
 if (!applyLaunch(launchParams())) loadTab(0);
 </script>
